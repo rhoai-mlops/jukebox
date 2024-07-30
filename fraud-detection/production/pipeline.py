@@ -21,14 +21,6 @@ from evaluate_model import evaluate_keras_model_performance, validate_onnx_model
 from save_model import push_to_model_registry
 
 ######### Pipeline definition #########
-# Create client
-with open(os.environ['KF_PIPELINES_SA_TOKEN_PATH'], "r") as f:
-    TOKEN = f.read()
-client = kfp.Client(
-    existing_token=TOKEN,
-    host='https://ds-pipeline-dspa-mlops-dev-zone.apps.dev.rhoai.rh-aiservices-bu.com',
-)
-
 # Create pipeline
 @dsl.pipeline(
   name='fraud-detection-training-pipeline',
@@ -62,6 +54,14 @@ def fraud_training_pipeline(datastore: dict, hyperparameters: dict):
     )
 
 if __name__ == '__main__':
+    # Create client
+    with open(os.environ['KF_PIPELINES_SA_TOKEN_PATH'], "r") as f:
+        TOKEN = f.read()
+    client = kfp.Client(
+        existing_token=TOKEN,
+        host='https://ds-pipeline-dspa-mlops-dev-zone.apps.dev.rhoai.rh-aiservices-bu.com',
+    )
+    
     metadata = {
         "datastore": {
             "uri": "transactionsdb.mlops-transactionsdb.svc.cluster.local",
