@@ -4,6 +4,6 @@
         "table": "transactions.transactions"
     },
     "hyperparameters": {
-        "epochs": 3
+        "epochs": 2
     }
 }
