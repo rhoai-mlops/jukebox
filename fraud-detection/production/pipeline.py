@@ -61,21 +61,22 @@ def fraud_training_pipeline(datastore: dict, hyperparameters: dict):
         model = convert_task.outputs["onnx_model"]
     )
 
-metadata = {
-    "datastore": {
-        "uri": "transactionsdb.mlops-transactionsdb.svc.cluster.local",
-        "table": "transactions.transactions"
-    },
-    "hyperparameters": {
-        "epochs": 2
+if __name__ == '__main__':
+    metadata = {
+        "datastore": {
+            "uri": "transactionsdb.mlops-transactionsdb.svc.cluster.local",
+            "table": "transactions.transactions"
+        },
+        "hyperparameters": {
+            "epochs": 2
+        }
     }
-}
-    
-# Execute pipeline
-client.create_run_from_pipeline_func(
-    fraud_training_pipeline,
-    arguments=metadata,
-    experiment_name="fraud-training",
-    namespace="mlops-dev-zone",
-    enable_caching=True
-)
+        
+    # Execute pipeline
+    client.create_run_from_pipeline_func(
+        fraud_training_pipeline,
+        arguments=metadata,
+        experiment_name="fraud-training",
+        namespace="mlops-dev-zone",
+        enable_caching=True
+    )
