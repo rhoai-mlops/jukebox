@@ -54,14 +54,6 @@ def fraud_training_pipeline(datastore: dict, hyperparameters: dict):
     )
 
 if __name__ == '__main__':
-    # Create client
-    with open(os.environ['KF_PIPELINES_SA_TOKEN_PATH'], "r") as f:
-        TOKEN = f.read()
-    client = kfp.Client(
-        existing_token=TOKEN,
-        host='https://ds-pipeline-dspa-mlops-dev-zone.apps.dev.rhoai.rh-aiservices-bu.com',
-    )
-    
     metadata = {
         "datastore": {
             "uri": "transactionsdb.mlops-transactionsdb.svc.cluster.local",
@@ -72,7 +64,28 @@ if __name__ == '__main__':
         }
     }
         
-    # Execute pipeline
+    namespace_file_path =\
+        '/var/run/secrets/kubernetes.io/serviceaccount/namespace'
+    with open(namespace_file_path, 'r') as namespace_file:
+        namespace = namespace_file.read()
+
+    kubeflow_endpoint =\
+        f'https://ds-pipeline-dspa.{namespace}.svc:8443'
+
+    sa_token_file_path = '/var/run/secrets/kubernetes.io/serviceaccount/token'
+    with open(sa_token_file_path, 'r') as token_file:
+        bearer_token = token_file.read()
+
+    ssl_ca_cert =\
+        '/var/run/secrets/kubernetes.io/serviceaccount/service-ca.crt'
+
+    print(f'Connecting to Data Science Pipelines: {kubeflow_endpoint}')
+    client = kfp.Client(
+        host=kubeflow_endpoint,
+        existing_token=bearer_token,
+        ssl_ca_cert=ssl_ca_cert
+    )
+
     client.create_run_from_pipeline_func(
         fraud_training_pipeline,
         arguments=metadata,
