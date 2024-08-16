@@ -8,6 +8,7 @@ from kfp.dsl import (
     Dataset,
     Metrics,
 )
+from kfp.kubernetes import use_secret_as_env
 
 # Misc imports
 import os
@@ -21,6 +22,9 @@ from evaluate_model import evaluate_keras_model_performance, validate_onnx_model
 from save_model import push_to_model_registry
 
 ######### Pipeline definition #########
+
+data_connection_secret_name = 'aws-connection-models'
+
 # Create pipeline
 @dsl.pipeline(
   name='fraud-detection-training-pipeline',
@@ -51,6 +55,16 @@ def fraud_training_pipeline(datastore: dict, hyperparameters: dict):
     )
     register_model_task = push_to_model_registry(
         model = convert_task.outputs["onnx_model"]
+    )
+    use_secret_as_env(
+        register_model_task,
+        secret_name=data_connection_secret_name,
+        secret_key_to_env={
+            'AWS_S3_ENDPOINT': 'AWS_S3_ENDPOINT',
+            'AWS_ACCESS_KEY_ID': 'AWS_ACCESS_KEY_ID',
+            'AWS_SECRET_ACCESS_KEY': 'AWS_SECRET_ACCESS_KEY',
+            'AWS_S3_BUCKET': 'AWS_S3_BUCKET',
+        },
     )
 
 if __name__ == '__main__':
