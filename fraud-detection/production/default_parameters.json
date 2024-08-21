@@ -1,8 +1,4 @@
 {
-    "datastore": {
-        "uri": "transactionsdb.mlops-transactionsdb.svc.cluster.local",
-        "table": "transactions.transactions"
-    },
     "hyperparameters": {
         "epochs": 3
     }

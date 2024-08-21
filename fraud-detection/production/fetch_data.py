@@ -8,21 +8,46 @@ from kfp.dsl import (
     Metrics,
 )
 
-@component(packages_to_install=["psycopg2", "pandas"])
+@component(base_image='python:3.9', packages_to_install=["feast==0.36.0", "psycopg2>=2.9", "dask[dataframe]", "s3fs", "pandas"])
 def fetch_transactionsdb_data(
-    datastore: dict, 
     dataset: Output[Dataset]
 ):
     """
-    Fetches data from the transactionsdb datastore
+    Fetches data from Feast
     """
     
-    import psycopg2
+    import feast
     import pandas as pd
+    from datetime import datetime
+    import yaml
+
+
+    with open('/feast-info/feature_store.yaml', 'r') as file:
+        fs_config_yaml = yaml.safe_load(file)
     
-    query = f"select * from {datastore['table']} limit 10000"
-    with psycopg2.connect(host='transactionsdb.mlops-transactionsdb.svc.cluster.local', port=5432, dbname='transactionsdb', user='transactionsdb', password='transactionsdb') as connection:
-        data = pd.read_sql_query(query, connection)
+    fs_config = feast.repo_config.RepoConfig(**fs_config_yaml)
+    fs = feast.FeatureStore(config=fs_config)
+
+    # Fetch the first X users latest values
+    entity_df = pd.DataFrame.from_dict(
+    {
+        "transaction_id": list(range(10000)),
+        "event_timestamp": [
+            datetime.now()
+            ]*10000
+        }
+    )
+
+    features = [
+        "transaction_features:distance_from_last_transaction",
+        "transaction_features:ratio_to_median_purchase_price",
+        "transaction_features:used_chip",
+        "transaction_features:used_pin_number",
+        "transaction_features:online_order",
+        "transaction_features:fraud",
+    ]
+
+    data = fs.get_historical_features(entity_df=entity_df, features=features).to_df()
     print(data.head())
     
     dataset.path += ".csv"
