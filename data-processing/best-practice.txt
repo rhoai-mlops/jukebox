@@ -1,0 +1,3 @@
+- Set up a CI pipeline that automatically runs feast apply on changes in a feast repo
+- Marginalize at the end of ETL pipeline
+- Save the feature references together with the model as metadata, to be used during inference
