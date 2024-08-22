@@ -1,0 +1,22 @@
+project: fraud_detection
+provider: local
+registry:
+    registry_store_type: PostgreSQLRegistryStore
+    path: feast_registry
+    host: feast.mlops-feature-store.svc.cluster.local
+    port: 5432
+    database: feast
+    db_schema: feast
+    user: feast
+    password: feast
+online_store:
+    type: postgres
+    host: feast.mlops-feature-store.svc.cluster.local
+    port: 5432
+    database: feast
+    db_schema: feast
+    user: feast
+    password: feast
+offline_store:
+    type: file
+entity_key_serialization_version: 2
