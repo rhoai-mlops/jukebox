@@ -41,7 +41,7 @@ def evaluate_keras_model_performance(
     
     cmatrix = confusion_matrix(np.asarray(y_test), y_pred)
     cmatrix = cmatrix.tolist()
-    targets = [0, 1]  #TODO: Replace with info from schema
+    targets = ["0", "1"]  #TODO: Replace with info from schema
     classification_metrics.log_confusion_matrix(targets, cmatrix)
     
     if accuracy <= previous_model_metrics["accuracy"]:
