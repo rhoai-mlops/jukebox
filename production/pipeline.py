@@ -30,7 +30,7 @@ data_connection_secret_name = 'aws-connection-models'
   name='fraud-detection-training-pipeline',
   description='Trains the fraud detection model.'
 )
-def fraud_training_pipeline(hyperparameters: dict):
+def fraud_training_pipeline(hyperparameters: dict, model_name: str, version: str):
     # Fetch Data
     fetch_task = fetch_transactionsdb_data()
     kubernetes.use_config_map_as_volume(fetch_task,
@@ -81,7 +81,7 @@ def fraud_training_pipeline(hyperparameters: dict):
     )
 
     # Register model to the Model Registry
-    register_model_task = push_to_model_registry(
+    register_model_task = push_to_model_registry( model_name = model_name, version = version,
         model = convert_task.outputs["onnx_model"]
     )
     kubernetes.use_secret_as_env(

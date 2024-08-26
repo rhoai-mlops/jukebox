@@ -36,7 +36,7 @@ def preprocess_transactiondb_data(
     
     df = pd.read_csv(in_data.path)
     print(df.head())
-    X = df.drop(columns = ['transaction_id', 'fraud', 'event_timestamp'])
+    X = df.drop(columns = ['transaction_id','repeat_retailer','distance_from_home', 'fraud', 'event_timestamp'])
     y = df['fraud']
 
     # Split the data into training and testing sets so you have something to test the trained model with.
