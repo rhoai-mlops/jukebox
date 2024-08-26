@@ -11,10 +11,17 @@ from kfp.dsl import (
 
 @component(
     base_image='python:3.9',
-    packages_to_install=['boto3', 'model-registry=="0.2.3a1"']
+    packages_to_install=[
+        'pip==24.2',  
+        'setuptools>=65.0.0', 
+        'boto3',
+        'model-registry==0.2.3a1'
+    ]
 )
 
 def push_to_model_registry(
+    model_name: str,
+    version: str, 
     model: Input[Model]
 ):
     from os import environ
@@ -22,13 +29,13 @@ def push_to_model_registry(
     from boto3 import client
     from model_registry import ModelRegistry
 
-    model_object_prefix = environ.get('model_object_prefix', 'model')
+    model_object_prefix = model_name if model_name else "model"
     s3_endpoint_url = environ.get('AWS_S3_ENDPOINT')
     s3_access_key = environ.get('AWS_ACCESS_KEY_ID')
     s3_secret_key = environ.get('AWS_SECRET_ACCESS_KEY')
     s3_bucket_name = environ.get('AWS_S3_BUCKET')
     author_name = environ.get('AUTHOR_NAME', 'default_author') 
-    version = ''
+    version = version
 
     def _initialize_s3_client(s3_endpoint_url, s3_access_key, s3_secret_key):
         print('Initializing S3 client')
@@ -74,7 +81,7 @@ def push_to_model_registry(
     _do_upload(s3_client, model.path, "/models/fraud/1/" + model_object_name, s3_bucket_name)
 
     def _register_model(author_name, model_object_prefix, version, s3_endpoint_url, model_name):
-        registry = ModelRegistry(server_address="model-registry-service.kubeflow.svc.cluster.local", port=9090, author=author_name)
+        registry = ModelRegistry(server_address="http://model-registry-service.kubeflow.svc.cluster.local", port=8080, author=author_name, is_secure=False)
         registered_model_name = model_object_prefix
         version_name = version
         rm = registry.register_model(

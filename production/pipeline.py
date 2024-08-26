@@ -8,7 +8,7 @@ from kfp.dsl import (
     Dataset,
     Metrics,
 )
-from kfp import kubernetes
+from kfp.kubernetes import use_secret_as_env
 
 # Misc imports
 import os
@@ -30,30 +30,10 @@ data_connection_secret_name = 'aws-connection-models'
   name='fraud-detection-training-pipeline',
   description='Trains the fraud detection model.'
 )
-def fraud_training_pipeline(hyperparameters: dict):
-    # Fetch Data
-    fetch_task = fetch_transactionsdb_data()
-    kubernetes.use_config_map_as_volume(fetch_task,
-                                       config_map_name='feast-registry',
-                                       mount_path='/feast-info')
-    kubernetes.use_secret_as_env(
-        fetch_task,
-        secret_name='aws-connection-feast-offline-store',
-        secret_key_to_env={
-            'AWS_S3_ENDPOINT': 'AWS_S3_ENDPOINT',
-            'AWS_ACCESS_KEY_ID': 'AWS_ACCESS_KEY_ID',
-            'AWS_SECRET_ACCESS_KEY': 'AWS_SECRET_ACCESS_KEY',
-            'AWS_S3_BUCKET': 'AWS_S3_BUCKET',
-        },
-    )
-
-    # Validate Data
+def fraud_training_pipeline(datastore: dict, hyperparameters: dict, model_name: str, version: str):
+    fetch_task = fetch_transactionsdb_data(datastore = datastore)
     data_validation_task = validate_transactiondb_data(dataset = fetch_task.outputs["dataset"])
-
-    # Pre-process Data
     pre_processing_task = preprocess_transactiondb_data(in_data = fetch_task.outputs["dataset"])
-
-    # Train Keras model
     training_task = train_fraud_model(
         train_data = pre_processing_task.outputs["train_data"], 
         val_data = pre_processing_task.outputs["val_data"],
@@ -61,30 +41,22 @@ def fraud_training_pipeline(hyperparameters: dict):
         class_weights = pre_processing_task.outputs["class_weights"],
         hyperparameters = hyperparameters,
     )
-
-    # Convert Keras model to ONNX
     convert_task = convert_keras_to_onnx(keras_model = training_task.outputs["trained_model"])
-
-    # Evaluate Keras model performance
     model_evaluation_task = evaluate_keras_model_performance(
         model = training_task.outputs["trained_model"],
         test_data = pre_processing_task.outputs["test_data"],
         scaler = pre_processing_task.outputs["scaler"],
         previous_model_metrics = {"accuracy":0.85},
     )
-
-    # Validate that the Keras -> ONNX conversion was successful
     model_validation_task = validate_onnx_model(
         keras_model = training_task.outputs["trained_model"],
         onnx_model = convert_task.outputs["onnx_model"],
         test_data = pre_processing_task.outputs["test_data"]
     )
-
-    # Register model to the Model Registry
-    register_model_task = push_to_model_registry(
+    register_model_task = push_to_model_registry( model_name = model_name, version = version,
         model = convert_task.outputs["onnx_model"]
     )
-    kubernetes.use_secret_as_env(
+    use_secret_as_env(
         register_model_task,
         secret_name=data_connection_secret_name,
         secret_key_to_env={
@@ -97,6 +69,10 @@ def fraud_training_pipeline(hyperparameters: dict):
 
 if __name__ == '__main__':
     metadata = {
+        "datastore": {
+            "uri": "transactionsdb.mlops-transactionsdb.svc.cluster.local",
+            "table": "transactions.transactions"
+        },
         "hyperparameters": {
             "epochs": 2
         }
