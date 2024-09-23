@@ -1,17 +1,24 @@
 from feast import FeatureService
 
-from features import transactions_features
+from features import song_properties
 
-transactions_fs = FeatureService(
-    name="training_fs",
-    features=[
-        transactions_features[["distance_from_last_transaction", "ratio_to_median_purchase_price", "used_chip", "used_pin_number", "online_order", "fraud"]]
-    ]
-)
-
-transactions_fs = FeatureService(
+song_properties_fs = FeatureService(
     name="serving_fs",
     features=[
-        transactions_features[["distance_from_last_transaction", "ratio_to_median_purchase_price", "used_chip", "used_pin_number", "online_order"]]
+        song_properties[[
+            "is_explicit",
+            "duration_ms",
+            "danceability",
+            "energy",
+            "key",
+            "loudness",
+            "mode",
+            "speechiness",
+            "acousticness",
+            "instrumentalness",
+            "liveness",
+            "valence",
+            "tempo"
+            ]]
     ]
 )
