@@ -1,4 +1,4 @@
-project: fraud_detection
+project: music
 provider: local
 registry:
     registry_store_type: PostgreSQLRegistryStore
