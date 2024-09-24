@@ -9,15 +9,15 @@
       "id": "primary",
       "nodes": [
         {
-          "id": "fd0d8464-1fa6-4d29-9da5-2b185a7cc8f3",
+          "id": "8ccfce29-c022-4496-91cb-353c62cdfc54",
           "type": "execution_node",
           "op": "execute-notebook-node",
           "app_data": {
             "component_parameters": {
               "dependencies": [],
-              "include_subdirectories": true,
+              "include_subdirectories": false,
               "outputs": [
-                "models/fraud/1/model.onnx"
+                "models/music/1/model.onnx"
               ],
               "env_vars": [],
               "kubernetes_pod_annotations": [],
@@ -26,14 +26,18 @@
               "kubernetes_shared_mem_size": {},
               "kubernetes_tolerations": [],
               "mounted_volumes": [],
-              "filename": "1_experiment_train.ipynb"
+              "filename": "1-experiment_train.ipynb",
+              "cpu": 1,
+              "cpu_limit": 2,
+              "memory": 8,
+              "memory_limit": 12
             },
             "label": "",
             "ui_data": {
-              "label": "1_experiment_train.ipynb",
-              "image": "/notebook/fraud-detection-w-modelmesh/tensorflow-workbench/static/elyra/notebook.svg",
-              "x_pos": 88,
-              "y_pos": 275,
+              "label": "1-experiment_train.ipynb",
+              "image": "/notebook/openmusicai2/hitmusic-wb/static/elyra/notebook.svg",
+              "x_pos": 161,
+              "y_pos": 194,
               "description": "Run notebook file"
             }
           },
@@ -67,7 +71,7 @@
           ]
         },
         {
-          "id": "4fd1c6cc-93e1-4294-ae0a-2d1125cff8ca",
+          "id": "faf12ca0-a935-4ecb-a641-1886fcf8d470",
           "type": "execution_node",
           "op": "execute-notebook-node",
           "app_data": {
@@ -108,14 +112,14 @@
               "kubernetes_shared_mem_size": {},
               "kubernetes_tolerations": [],
               "mounted_volumes": [],
-              "filename": "2_save_model.ipynb"
+              "filename": "2-save_model.ipynb"
             },
             "label": "",
             "ui_data": {
-              "label": "2_save_model.ipynb",
-              "image": "/notebook/fraud-detection-w-modelmesh/tensorflow-workbench/static/elyra/notebook.svg",
-              "x_pos": 342,
-              "y_pos": 277,
+              "label": "2-save_model.ipynb",
+              "image": "/notebook/openmusicai2/hitmusic-wb/static/elyra/notebook.svg",
+              "x_pos": 477,
+              "y_pos": 195,
               "description": "Run notebook file"
             }
           },
@@ -133,8 +137,8 @@
               },
               "links": [
                 {
-                  "id": "ff992f46-1715-4d33-b56b-4a867e4486ca",
-                  "node_id_ref": "fd0d8464-1fa6-4d29-9da5-2b185a7cc8f3",
+                  "id": "1c701231-43a1-4fac-8757-6b83c6c8988b",
+                  "node_id_ref": "8ccfce29-c022-4496-91cb-353c62cdfc54",
                   "port_id_ref": "outPort"
                 }
               ]
@@ -163,19 +167,18 @@
         "version": 8,
         "runtime_type": "KUBEFLOW_PIPELINES",
         "properties": {
-          "name": "6 Train Save",
+          "name": "4-train_save_model",
           "runtime": "Data Science Pipelines",
           "pipeline_defaults": {
-            "kubernetes_tolerations": [],
             "mounted_volumes": [],
             "kubernetes_pod_annotations": [],
-            "kubernetes_pod_labels": [],
             "kubernetes_shared_mem_size": {},
-            "env_vars": [],
+            "kubernetes_pod_labels": [],
+            "kubernetes_tolerations": [],
             "kubernetes_secrets": [],
-            "runtime_image": "quay.io/modh/runtime-images@sha256:ba76fd74b7595329a23f710485a7701caa0a7b495e60c89a23d5338ca13cf2e2"
-          },
-          "pipeline_parameters": []
+            "env_vars": [],
+            "runtime_image": "quay.io/modh/runtime-images@sha256:1186ac6c9026d1091f707fe8cedfcc1ea12d1ec46edd9e8d56bb4b12ba048630"
+          }
         }
       },
       "runtime_ref": ""
