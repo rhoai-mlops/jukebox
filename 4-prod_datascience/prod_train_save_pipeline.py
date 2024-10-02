@@ -14,10 +14,10 @@ from kfp import kubernetes
 import os
 
 # Component imports
-from fetch_data import fetch_transactionsdb_data
-from data_validation import validate_transactiondb_data
-from data_preprocessing import preprocess_transactiondb_data
-from train_model import train_fraud_model, convert_keras_to_onnx
+from fetch_data import fetch_data
+from data_validation import validate_data
+from data_preprocessing import preprocess_data
+from train_model import train_model, convert_keras_to_onnx
 from evaluate_model import evaluate_keras_model_performance, validate_onnx_model
 from save_model import push_to_model_registry
 
@@ -27,38 +27,38 @@ data_connection_secret_name = 'aws-connection-models'
 
 # Create pipeline
 @dsl.pipeline(
-  name='fraud-detection-training-pipeline',
-  description='Trains the fraud detection model.'
+  name='training-pipeline',
+  description='We train an amazing model 🚂'
 )
-def fraud_training_pipeline(hyperparameters: dict, model_name: str, version: str):
+def training_pipeline(hyperparameters: dict, model_name: str, version: str):
     # Fetch Data
-    fetch_task = fetch_transactionsdb_data()
-    kubernetes.use_config_map_as_volume(fetch_task,
-                                       config_map_name='feast-registry',
-                                       mount_path='/feast-info')
-    kubernetes.use_secret_as_env(
-        fetch_task,
-        secret_name='aws-connection-feast-offline-store',
-        secret_key_to_env={
-            'AWS_S3_ENDPOINT': 'AWS_S3_ENDPOINT',
-            'AWS_ACCESS_KEY_ID': 'AWS_ACCESS_KEY_ID',
-            'AWS_SECRET_ACCESS_KEY': 'AWS_SECRET_ACCESS_KEY',
-            'AWS_S3_BUCKET': 'AWS_S3_BUCKET',
-        },
-    )
+    fetch_task = fetch_data()
+    # kubernetes.use_config_map_as_volume(fetch_task,
+    #                                    config_map_name='feast-registry',
+    #                                    mount_path='/feast-info')
+    # kubernetes.use_secret_as_env(
+    #     fetch_task,
+    #     secret_name='aws-connection-feast-offline-store',
+    #     secret_key_to_env={
+    #         'AWS_S3_ENDPOINT': 'AWS_S3_ENDPOINT',
+    #         'AWS_ACCESS_KEY_ID': 'AWS_ACCESS_KEY_ID',
+    #         'AWS_SECRET_ACCESS_KEY': 'AWS_SECRET_ACCESS_KEY',
+    #         'AWS_S3_BUCKET': 'AWS_S3_BUCKET',
+    #     },
+    # )
 
     # Validate Data
-    data_validation_task = validate_transactiondb_data(dataset = fetch_task.outputs["dataset"])
+    data_validation_task = validate_data(dataset = fetch_task.outputs["dataset"])
 
     # Pre-process Data
-    pre_processing_task = preprocess_transactiondb_data(in_data = fetch_task.outputs["dataset"])
+    pre_processing_task = preprocess_data(in_data = fetch_task.outputs["dataset"])
+    pre_processing_task.after(data_validation_task)
 
     # Train Keras model
-    training_task = train_fraud_model(
+    training_task = train_model(
         train_data = pre_processing_task.outputs["train_data"], 
         val_data = pre_processing_task.outputs["val_data"],
         scaler = pre_processing_task.outputs["scaler"],
-        class_weights = pre_processing_task.outputs["class_weights"],
         hyperparameters = hyperparameters,
     )
 
@@ -70,19 +70,26 @@ def fraud_training_pipeline(hyperparameters: dict, model_name: str, version: str
         model = training_task.outputs["trained_model"],
         test_data = pre_processing_task.outputs["test_data"],
         scaler = pre_processing_task.outputs["scaler"],
-        previous_model_metrics = {"accuracy":0.85},
+        label_encoder = pre_processing_task.outputs["label_encoder"],
+        previous_model_metrics = {"accuracy":0.1},
     )
 
     # Validate that the Keras -> ONNX conversion was successful
     model_validation_task = validate_onnx_model(
         keras_model = training_task.outputs["trained_model"],
         onnx_model = convert_task.outputs["onnx_model"],
-        test_data = pre_processing_task.outputs["test_data"]
+        test_data = pre_processing_task.outputs["test_data"],
+        scaler = pre_processing_task.outputs["scaler"],
     )
 
     # Register model to the Model Registry
-    register_model_task = push_to_model_registry( model_name = model_name, version = version,
-        model = convert_task.outputs["onnx_model"]
+    register_model_task = push_to_model_registry(
+        model_name = model_name, 
+        version = version,
+        model = convert_task.outputs["onnx_model"],
+        metrics = model_evaluation_task.outputs["metrics"],
+        scaler = pre_processing_task.outputs["scaler"],
+        label_encoder = pre_processing_task.outputs["label_encoder"],
     )
     kubernetes.use_secret_as_env(
         register_model_task,
@@ -94,12 +101,20 @@ def fraud_training_pipeline(hyperparameters: dict, model_name: str, version: str
             'AWS_S3_BUCKET': 'AWS_S3_BUCKET',
         },
     )
+    kubernetes.use_field_path_as_env(
+        register_model_task,
+        env_name='NAMESPACE',
+        field_path='metadata.namespace'
+    )
+    register_model_task.after(model_validation_task)
 
 if __name__ == '__main__':
     metadata = {
         "hyperparameters": {
             "epochs": 2
-        }
+        },
+        "model_name": "jukebox",
+        "version": "0.0.2",
     }
         
     namespace_file_path =\
@@ -125,9 +140,8 @@ if __name__ == '__main__':
     )
 
     client.create_run_from_pipeline_func(
-        fraud_training_pipeline,
+        training_pipeline,
         arguments=metadata,
-        experiment_name="fraud-training",
-        namespace="mlops-dev-zone",
+        experiment_name="training",
         enable_caching=True
     )

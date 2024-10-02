@@ -10,11 +10,10 @@ from kfp.dsl import (
 )
 
 @component(base_image="tensorflow/tensorflow", packages_to_install=[ "pandas", "scikit-learn"])
-def train_fraud_model(
+def train_model(
     train_data: Input[Dataset],
     val_data: Input[Dataset],
     scaler: Input[Model],
-    class_weights: dict,
     hyperparameters: dict,
     trained_model: Output[Model]
 ):
@@ -33,30 +32,24 @@ def train_fraud_model(
     with open(val_data.path, 'rb') as pickle_file:
         X_val, y_val = pd.read_pickle(pickle_file)
     with open(scaler.path, 'rb') as pickle_file:
-        st_scaler = pd.read_pickle(pickle_file)
-        
-    y_train = y_train.to_numpy()
-    y_val = y_val.to_numpy()
+        scaler_ = pd.read_pickle(pickle_file)
     
     model = Sequential()
     model.add(Dense(32, activation = 'relu', input_dim = X_train.shape[1]))
-    model.add(Dropout(0.2))
-    model.add(Dense(32))
-    model.add(BatchNormalization())
+    model.add(Dense(64))
     model.add(Activation('relu'))
-    model.add(Dropout(0.2))
-    model.add(Dense(32))
-    model.add(BatchNormalization())
+    model.add(Dense(128))
     model.add(Activation('relu'))
-    model.add(Dropout(0.2))
-    model.add(Dense(1, activation = 'sigmoid'))
-    model.compile(optimizer='adam',loss='binary_crossentropy',metrics=['accuracy'])
+    model.add(Dense(256))
+    model.add(Activation('relu'))
+    model.add(Dense(y_train.shape[1], activation = 'sigmoid'))
+    model.compile(optimizer='adam',loss='categorical_crossentropy',metrics=['accuracy', 'Precision', 'Recall'])
     model.summary()
     
     epochs = hyperparameters["epochs"]
     history = model.fit(X_train, y_train, epochs=epochs, \
-                        validation_data=(st_scaler.transform(X_val.values),y_val), \
-                        verbose = True, class_weight = class_weights)
+                        validation_data=(scaler_.transform(X_val.values),y_val), \
+                        verbose = True)
     print("Training of model is complete")
     
     trained_model.path += ".keras"
