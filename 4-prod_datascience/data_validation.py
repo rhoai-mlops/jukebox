@@ -9,7 +9,7 @@ from kfp.dsl import (
 )
 
 @component()
-def validate_transactiondb_data(
+def validate_data(
     dataset: Input[Dataset]
 ) -> bool:
     """
