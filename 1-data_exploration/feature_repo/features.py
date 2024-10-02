@@ -13,7 +13,7 @@ music = Entity(name="music", join_keys=["spotify_id"])
 music_source = FileSource(
     name="music_s3",
     path="s3://data/song_properties.parquet",
-    s3_endpoint_override="minio-service.mlops.svc.cluster.local",
+    s3_endpoint_override="http://minio-service.mlops-feature-store.svc.cluster.local:9000",
     file_format=ParquetFormat(),
     timestamp_field="snapshot_date",
 )

@@ -50,8 +50,8 @@ def fetch_data(
     # data = fs.get_historical_features(entity_df=entity_df, features=features).to_df()
     
     
-    song_properties = pd.read_parquet('https://github.com/rhoai-mlops/jukebox/raw/refs/heads/main/1-data_prep/song_properties.parquet')
-    song_rankings = pd.read_parquet('https://github.com/rhoai-mlops/jukebox/raw/refs/heads/main/1-data_prep/song_rankings.parquet')
+    song_properties = pd.read_parquet('https://github.com/rhoai-mlops/jukebox/raw/refs/heads/main/99-data_prep/song_properties.parquet')
+    song_rankings = pd.read_parquet('https://github.com/rhoai-mlops/jukebox/raw/refs/heads/main/99-data_prep/song_rankings.parquet')
     
     data = song_rankings.merge(song_properties, on='spotify_id', how='left')
     
