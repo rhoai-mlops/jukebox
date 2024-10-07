@@ -1,4 +1,4 @@
-# 2-data_exploration
+# 1-data_exploration
 
 This directory contains student notebooks to do the following:
 
