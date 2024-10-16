@@ -107,6 +107,11 @@ def training_pipeline(hyperparameters: dict, model_name: str, version: str):
         field_path='metadata.namespace'
     )
     register_model_task.after(model_validation_task)
+    kubernetes.mount_pvc(
+        register_model_task,
+        pvc_name=model_strorage_pvc,
+        mount_path='/models',
+    )
 
 if __name__ == '__main__':
     metadata = {
@@ -115,6 +120,7 @@ if __name__ == '__main__':
         },
         "model_name": "jukebox",
         "version": "0.0.2",
+        "model_strorage_pvc": "jukebox-model-pvc",
     }
         
     namespace_file_path =\

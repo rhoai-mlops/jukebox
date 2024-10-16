@@ -31,7 +31,14 @@ def push_to_model_registry(
     from datetime import datetime
     from boto3 import client
     from model_registry import ModelRegistry
+    import shutil
 
+    # Save to PVC
+    shutil.copyfile(model.path, f"/models/{model_name}.onnx")
+    shutil.copyfile(scaler.path, f"/models/artifacts/scaler.pkl")
+    shutil.copyfile(label_encoder.path, f"/models/artifacts/label_encoder.pkl")
+
+    # Save to S3
     model_object_prefix = model_name if model_name else "model"
     s3_endpoint_url = environ.get('AWS_S3_ENDPOINT')
     s3_access_key = environ.get('AWS_ACCESS_KEY_ID')
