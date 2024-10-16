@@ -109,7 +109,7 @@ def training_pipeline(hyperparameters: dict, model_name: str, version: str):
     register_model_task.after(model_validation_task)
     kubernetes.mount_pvc(
         register_model_task,
-        pvc_name=model_strorage_pvc,
+        pvc_name=model_storage_pvc,
         mount_path='/models',
     )
 
@@ -120,7 +120,7 @@ if __name__ == '__main__':
         },
         "model_name": "jukebox",
         "version": "0.0.2",
-        "model_strorage_pvc": "jukebox-model-pvc",
+        "model_storage_pvc": "jukebox-model-pvc",
     }
         
     namespace_file_path =\
