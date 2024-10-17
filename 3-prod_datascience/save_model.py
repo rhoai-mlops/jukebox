@@ -27,13 +27,14 @@ def push_to_model_registry(
     scaler: Input[Model],
     label_encoder: Input[Model],
 ):
-    from os import environ, path
+    from os import environ, path, makedirs
     from datetime import datetime
     from boto3 import client
     from model_registry import ModelRegistry
     import shutil
 
     # Save to PVC
+    makedirs("/models/artifacts", exist_ok=True)
     shutil.copyfile(model.path, f"/models/{model_name}.onnx")
     shutil.copyfile(scaler.path, f"/models/artifacts/scaler.pkl")
     shutil.copyfile(label_encoder.path, f"/models/artifacts/label_encoder.pkl")
