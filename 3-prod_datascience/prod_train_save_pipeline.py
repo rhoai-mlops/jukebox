@@ -30,7 +30,7 @@ data_connection_secret_name = 'aws-connection-models'
   name='training-pipeline',
   description='We train an amazing model 🚂'
 )
-def training_pipeline(hyperparameters: dict, model_name: str, version: str):
+def training_pipeline(hyperparameters: dict, model_name: str, version: str, model_storage_pvc: str):
     # Fetch Data
     fetch_task = fetch_data()
     # kubernetes.use_config_map_as_volume(fetch_task,
