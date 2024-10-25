@@ -17,7 +17,7 @@
               "dependencies": [],
               "include_subdirectories": false,
               "outputs": [
-                "models/music/1/model.onnx"
+                "models/jukebox/1/model.onnx"
               ],
               "env_vars": [],
               "kubernetes_pod_annotations": [],
