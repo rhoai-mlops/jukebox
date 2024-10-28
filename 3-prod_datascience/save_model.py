@@ -15,7 +15,7 @@ from kfp.dsl import (
         'pip==24.2',  
         'setuptools>=65.0.0', 
         'boto3',
-        'model-registry==0.2.7a1'
+        'model-registry==0.2.9'
     ]
 )
 
@@ -105,14 +105,14 @@ def push_to_model_registry(
         
         rm = registry.register_model(
             registered_model_name,
-            f"s3://{s3_endpoint_url}/{model_name}",
+            f"s3://{s3_endpoint_url}/{model_artifact_s3_path}",
             model_format_name="onnx",
             model_format_version="1",
             version=version_name,
-            description=f"Example Model version {version}",
+            description=f"Model {model_name} version {version}",
             metadata=metadata
         )
         print("Model registered successfully")
 
     # Register the model
-    _register_model(author_name, model_object_prefix, version, s3_endpoint_url, _generate_artifact_name(model.path, version))
+    _register_model(author_name, model_object_prefix, version, s3_endpoint_url.split("http://")[-1], _generate_artifact_name(model.path, version))
