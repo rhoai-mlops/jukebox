@@ -56,4 +56,5 @@ def fetch_data(
     data = song_rankings.merge(song_properties, on='spotify_id', how='left')
     
     dataset.path += ".csv"
+    data.metadata = {"song_properties": "https://github.com/rhoai-mlops/jukebox/raw/refs/heads/main/99-data_prep/song_properties.parquet", "song_rankings": "https://github.com/rhoai-mlops/jukebox/raw/refs/heads/main/99-data_prep/song_rankings.parquet" }
     data.to_csv(dataset.path, index=False, header=True)

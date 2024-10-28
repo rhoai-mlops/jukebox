@@ -26,12 +26,14 @@ def push_to_model_registry(
     metrics: Input[Metrics],
     scaler: Input[Model],
     label_encoder: Input[Model],
+    dataset: Input[Dataset]
 ):
     from os import environ, path, makedirs
     from datetime import datetime
     from boto3 import client
     from model_registry import ModelRegistry
     import shutil
+    import json
 
     # Save to PVC
     makedirs("/models/artifacts", exist_ok=True)
@@ -96,7 +98,8 @@ def push_to_model_registry(
         registered_model_name = model_object_prefix
         version_name = version
         metadata = {
-            # "metrics": metrics,
+            "accuracy": str(metrics.metadata['Accuracy']),
+            "dataset": json.dumps(dataset.metadata),
             "license": "apache-2.0",
             "scaler_artifact": f"s3://{s3_endpoint_url}{scaler_artifact_s3_path}",
             "label_encoder_artifact": f"s3://{s3_endpoint_url}{label_encoder_artifact_s3_path}",

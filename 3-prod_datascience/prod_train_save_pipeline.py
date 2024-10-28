@@ -88,6 +88,7 @@ def training_pipeline(hyperparameters: dict, model_name: str, version: str, mode
         version = version,
         model = convert_task.outputs["onnx_model"],
         metrics = model_evaluation_task.outputs["metrics"],
+        dataset = fetch_task.outputs["dataset"],
         scaler = pre_processing_task.outputs["scaler"],
         label_encoder = pre_processing_task.outputs["label_encoder"],
     )
