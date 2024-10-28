@@ -105,7 +105,7 @@ def push_to_model_registry(
         
         rm = registry.register_model(
             registered_model_name,
-            f"s3://{s3_endpoint_url}/{model_artifact_s3_path}",
+            f"s3://{s3_endpoint_url}{model_artifact_s3_path}",
             model_format_name="onnx",
             model_format_version="1",
             version=version_name,
