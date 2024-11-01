@@ -15,7 +15,7 @@ from kfp.dsl import (
         'pip==24.2',  
         'setuptools>=65.0.0', 
         'boto3',
-        'model-registry==0.2.7a1'
+        'model-registry==0.2.9'
     ]
 )
 
@@ -26,12 +26,14 @@ def push_to_model_registry(
     metrics: Input[Metrics],
     scaler: Input[Model],
     label_encoder: Input[Model],
+    dataset: Input[Dataset]
 ):
     from os import environ, path, makedirs
     from datetime import datetime
     from boto3 import client
     from model_registry import ModelRegistry
     import shutil
+    import json
 
     # Save to PVC
     makedirs("/models/artifacts", exist_ok=True)
@@ -90,29 +92,27 @@ def push_to_model_registry(
     _do_upload(s3_client, scaler.path, scaler_artifact_s3_path, s3_bucket_name)
     _do_upload(s3_client, label_encoder.path, label_encoder_artifact_s3_path, s3_bucket_name)
 
-    def _register_model(author_name, model_object_prefix, version, s3_endpoint_url, model_name):
+    def _register_model(author_name, model_object_prefix, version, model_name):
         namespace = environ.get("NAMESPACE")
         registry = ModelRegistry(server_address=f"http://model-registry-service.{namespace}.svc.cluster.local", port=8080, author=author_name, is_secure=False)
         registered_model_name = model_object_prefix
         version_name = version
         metadata = {
-            # "metrics": metrics,
-            "license": "apache-2.0",
-            "scaler_artifact": f"s3://{s3_endpoint_url}{scaler_artifact_s3_path}",
-            "label_encoder_artifact": f"s3://{s3_endpoint_url}{label_encoder_artifact_s3_path}",
+            "accuracy": str(metrics.metadata['Accuracy']),
+            "dataset": json.dumps(dataset.metadata)
         }
         print(metadata)
         
         rm = registry.register_model(
             registered_model_name,
-            f"s3://{s3_endpoint_url}/{model_name}",
+            "",
             model_format_name="onnx",
             model_format_version="1",
             version=version_name,
-            description=f"Example Model version {version}",
+            description=f"Model {model_name} version {version}",
             metadata=metadata
         )
         print("Model registered successfully")
 
     # Register the model
-    _register_model(author_name, model_object_prefix, version, s3_endpoint_url, _generate_artifact_name(model.path, version))
+    _register_model(author_name, model_object_prefix, version, _generate_artifact_name(model.path, version))
