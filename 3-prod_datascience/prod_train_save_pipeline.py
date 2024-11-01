@@ -92,16 +92,7 @@ def training_pipeline(hyperparameters: dict, model_name: str, version: str, mode
         scaler = pre_processing_task.outputs["scaler"],
         label_encoder = pre_processing_task.outputs["label_encoder"],
     )
-    kubernetes.use_secret_as_env(
-        register_model_task,
-        secret_name=data_connection_secret_name,
-        secret_key_to_env={
-            'AWS_S3_ENDPOINT': 'AWS_S3_ENDPOINT',
-            'AWS_ACCESS_KEY_ID': 'AWS_ACCESS_KEY_ID',
-            'AWS_SECRET_ACCESS_KEY': 'AWS_SECRET_ACCESS_KEY',
-            'AWS_S3_BUCKET': 'AWS_S3_BUCKET',
-        },
-    )
+    
     kubernetes.use_field_path_as_env(
         register_model_task,
         env_name='NAMESPACE',
