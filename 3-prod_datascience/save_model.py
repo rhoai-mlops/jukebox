@@ -92,7 +92,7 @@ def push_to_model_registry(
     _do_upload(s3_client, scaler.path, scaler_artifact_s3_path, s3_bucket_name)
     _do_upload(s3_client, label_encoder.path, label_encoder_artifact_s3_path, s3_bucket_name)
 
-    def _register_model(author_name, model_object_prefix, version, s3_endpoint_url, model_name):
+    def _register_model(author_name, model_object_prefix, version, model_name):
         namespace = environ.get("NAMESPACE")
         registry = ModelRegistry(server_address=f"http://model-registry-service.{namespace}.svc.cluster.local", port=8080, author=author_name, is_secure=False)
         registered_model_name = model_object_prefix
@@ -115,4 +115,4 @@ def push_to_model_registry(
         print("Model registered successfully")
 
     # Register the model
-    _register_model(author_name, model_object_prefix, version, s3_endpoint_url.split("http://")[-1], _generate_artifact_name(model.path, version))
+    _register_model(author_name, model_object_prefix, version, _generate_artifact_name(model.path, version))
