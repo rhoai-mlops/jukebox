@@ -68,7 +68,12 @@ def training_pipeline(hyperparameters: dict, model_name: str, version: str, clus
         test_data = pre_processing_task.outputs["test_data"],
         scaler = pre_processing_task.outputs["scaler"],
         label_encoder = pre_processing_task.outputs["label_encoder"],
-        previous_model_metrics = {"accuracy":0.1},
+        model_name = model_name
+    )
+    kubernetes.use_field_path_as_env(
+        model_evaluation_task,
+        env_name='NAMESPACE',
+        field_path='metadata.namespace'
     )
 
     # Validate that the Keras -> ONNX conversion was successful

@@ -10,13 +10,13 @@ from kfp.dsl import (
     ClassificationMetrics,
 )
 
-@component(base_image="tensorflow/tensorflow", packages_to_install=["tf2onnx", "onnx", "pandas", "scikit-learn"])
+@component(base_image="tensorflow/tensorflow", packages_to_install=["tf2onnx", "onnx", "pandas", "scikit-learn", "model-registry==0.2.7a1"])
 def evaluate_keras_model_performance(
     model: Input[Model],
     test_data: Input[Dataset],
     scaler: Input[Model],
     label_encoder: Input[Model],
-    previous_model_metrics: dict,
+    model_name: str,
     metrics: Output[Metrics],
     classification_metrics: Output[ClassificationMetrics]
 ):
@@ -24,6 +24,9 @@ def evaluate_keras_model_performance(
     import pandas as pd
     from sklearn.metrics import confusion_matrix
     import numpy as np
+    from os import environ
+    from model_registry import ModelRegistry
+    from model_registry.exceptions import StoreError
     
     trained_model = keras.saving.load_model(model.path)
     with open(test_data.path, 'rb') as pickle_file:
@@ -41,15 +44,37 @@ def evaluate_keras_model_performance(
     
     accuracy = np.sum(y_pred_argmax == y_test_argmax) / len(y_pred_argmax)
     
+    # Get the previous models properties from the Model Registry
+    namespace = environ.get("NAMESPACE")
+    registry = ModelRegistry(server_address=f"http://model-registry-service.{namespace}.svc.cluster.local", port=8080, author="", is_secure=False)
+    previous_model_properties = {}
+    
+    #Wrap with try except to see if the model exists in the registry
+    try:
+        # Get the latest models properties if no model is in production
+        for v in registry.get_model_versions(model_name).order_by_id().descending():
+            if not previous_model_properties:
+                previous_model_properties = registry.get_model_versions(model_name).order_by_id().descending().next_item().custom_properties
+            elif "prod" in v.custom_properties and v.custom_properties["prod"]:
+                previous_model_properties = v.custom_properties
+                break
+    except StoreError:
+        pass
+
+    if "accuracy" not in previous_model_properties:
+        previous_model_properties["accuracy"] = 0.0
+
+    print("Previos model metrics: ", previous_model_properties)
+
     metrics.log_metric("Accuracy", accuracy)
-    metrics.log_metric("Prev Model Accuracy", previous_model_metrics["accuracy"])
+    metrics.log_metric("Prev Model Accuracy", previous_model_properties["accuracy"])
     
     cmatrix = confusion_matrix(y_test_argmax,y_pred_argmax)
     cmatrix = cmatrix.tolist()
     targets = label_encoder_.classes_.tolist()
     classification_metrics.log_confusion_matrix(targets, cmatrix)
     
-    if accuracy <= previous_model_metrics["accuracy"]:
+    if accuracy <= previous_model_properties["accuracy"]:
         raise Exception("Accuracy is lower than the previous models")
         
 @component(base_image="tensorflow/tensorflow", packages_to_install=["onnxruntime", "pandas", "scikit-learn"])
