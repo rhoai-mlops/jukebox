@@ -176,7 +176,12 @@
             "kubernetes_pod_labels": [],
             "kubernetes_tolerations": [],
             "kubernetes_secrets": [],
-            "env_vars": [],
+            "env_vars": [
+              {
+                "env_var": "KF_PIPELINES_SA_TOKEN_PATH",
+                "value": "/var/run/secrets/kubernetes.io/serviceaccount/token"
+              }
+            ],
             "runtime_image": "quay.io/modh/runtime-images@sha256:1186ac6c9026d1091f707fe8cedfcc1ea12d1ec46edd9e8d56bb4b12ba048630"
           }
         }
