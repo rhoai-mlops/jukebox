@@ -21,6 +21,8 @@ from kfp.dsl import (
 def push_to_model_registry(
     model_name: str,
     version: str, 
+    author_name: str,
+    cluster_domain: str,
     model: Input[Model],
     metrics: Input[Metrics],
     scaler: Input[Model],
@@ -41,11 +43,11 @@ def push_to_model_registry(
 
     # Save to Model Registry
     model_object_prefix = model_name if model_name else "model"
-    author_name = environ.get('AUTHOR_NAME', 'default_author') 
-    cluster_domain = environ.get('CLUSTER_DOMAIN', 'apps.openshift.com') 
     version = version if version else datetime.now().strftime('%y%m%d%H%M')
+    author_name = author_name
+    cluster_domain = cluster_domain
 
-    def _register_model(author_name, cluster_domain, model_object_prefix, version):
+    def _register_model(author_name , cluster_domain, model_object_prefix, version):
         registry = ModelRegistry(server_address=f"https://" + author_name + "-registry-service." + cluster_domain, port=443, author=author_name, is_secure=False)
         registered_model_name = model_object_prefix
         version_name = version

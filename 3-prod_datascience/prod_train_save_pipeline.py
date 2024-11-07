@@ -30,7 +30,7 @@ data_connection_secret_name = 'aws-connection-models'
   name='training-pipeline',
   description='We train an amazing model 🚂'
 )
-def training_pipeline(hyperparameters: dict, model_name: str, version: str, model_storage_pvc: str):
+def training_pipeline(hyperparameters: dict, model_name: str, version: str, author_name: str, cluster_domain: str, model_storage_pvc: str):
     # Fetch Data
     fetch_task = fetch_data()
     kubernetes.use_secret_as_env(
@@ -83,6 +83,8 @@ def training_pipeline(hyperparameters: dict, model_name: str, version: str, mode
     register_model_task = push_to_model_registry(
         model_name = model_name, 
         version = version,
+        author_name = author_name, 
+        cluster_domain = cluster_domain,
         model = convert_task.outputs["onnx_model"],
         metrics = model_evaluation_task.outputs["metrics"],
         dataset = fetch_task.outputs["dataset"],
@@ -90,9 +92,6 @@ def training_pipeline(hyperparameters: dict, model_name: str, version: str, mode
         label_encoder = pre_processing_task.outputs["label_encoder"],
     )
 
-    # Set environment variables for AUTHOR_NAME and CLUSTER_DOMAIN
-    kubernetes.use_env_variable(register_model_task, 'AUTHOR_NAME', '<USER_NAME>')
-    kubernetes.use_env_variable(register_model_task, 'CLUSTER_DOMAIN', '<CLUSTER_DOMAIN>')
 
     # Set PVC to store model artifacts
     register_model_task.after(model_validation_task)
@@ -109,7 +108,9 @@ if __name__ == '__main__':
         },
         "model_name": "jukebox",
         "version": "0.0.2",
-        "model_storage_pvc": "jukebox-model-pvc",
+        "author_name": "<USER_NAME>",  # add your username here
+        "cluster_domain": "<CLUSTER_DOMAIN>", # add your cluster domain here
+        "model_storage_pvc": "jukebox-model-pvc"
     }
         
     namespace_file_path =\
