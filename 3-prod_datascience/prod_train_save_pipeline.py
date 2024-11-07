@@ -89,12 +89,12 @@ def training_pipeline(hyperparameters: dict, model_name: str, version: str, mode
         scaler = pre_processing_task.outputs["scaler"],
         label_encoder = pre_processing_task.outputs["label_encoder"],
     )
-    
-    kubernetes.use_field_path_as_env(
-        register_model_task,
-        env_name='NAMESPACE',
-        field_path='metadata.namespace'
-    )
+
+    # Set environment variables for AUTHOR_NAME and CLUSTER_DOMAIN
+    kubernetes.use_env_variable(register_model_task, 'AUTHOR_NAME', '<USER_NAME>')
+    kubernetes.use_env_variable(register_model_task, 'CLUSTER_DOMAIN', '<CLUSTER_DOMAIN>')
+
+    # Set PVC to store model artifacts
     register_model_task.after(model_validation_task)
     kubernetes.mount_pvc(
         register_model_task,

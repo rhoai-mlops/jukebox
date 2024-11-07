@@ -39,14 +39,14 @@ def push_to_model_registry(
     shutil.copyfile(scaler.path, f"/models/artifacts/scaler.pkl")
     shutil.copyfile(label_encoder.path, f"/models/artifacts/label_encoder.pkl")
 
-    # Save to S3
+    # Save to Model Registry
     model_object_prefix = model_name if model_name else "model"
     author_name = environ.get('AUTHOR_NAME', 'default_author') 
+    cluster_domain = environ.get('CLUSTER_DOMAIN', 'apps.openshift.com') 
     version = version if version else datetime.now().strftime('%y%m%d%H%M')
 
-    def _register_model(author_name, model_object_prefix, version):
-        namespace = environ.get("NAMESPACE")
-        registry = ModelRegistry(server_address=f"http://model-registry-service.{namespace}.svc.cluster.local", port=8080, author=author_name, is_secure=False)
+    def _register_model(author_name, cluster_domain, model_object_prefix, version):
+        registry = ModelRegistry(server_address=f"https://" + author_name + "-registry-service." + cluster_domain, port=443, author=author_name, is_secure=False)
         registered_model_name = model_object_prefix
         version_name = version
         metadata = {
@@ -66,4 +66,4 @@ def push_to_model_registry(
         print("Model registered successfully")
 
     # Register the model
-    _register_model(author_name, model_object_prefix, version)
+    _register_model(author_name, cluster_domain, model_object_prefix, version)
