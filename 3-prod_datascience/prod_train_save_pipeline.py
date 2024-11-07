@@ -30,7 +30,7 @@ data_connection_secret_name = 'aws-connection-models'
   name='training-pipeline',
   description='We train an amazing model 🚂'
 )
-def training_pipeline(hyperparameters: dict, model_name: str, version: str, cluster_domain: str, model_storage_pvc: str):
+def training_pipeline(hyperparameters: dict, model_name: str, version: str, cluster_domain: str, model_storage_pvc: str, prod_flag: bool):
     # Fetch Data
     fetch_task = fetch_data()
     # kubernetes.use_secret_as_env(
@@ -84,14 +84,23 @@ def training_pipeline(hyperparameters: dict, model_name: str, version: str, clus
         model_name = model_name, 
         version = version,
         cluster_domain = cluster_domain,
+        prod_flag = prod_flag,
         model = convert_task.outputs["onnx_model"],
         metrics = model_evaluation_task.outputs["metrics"],
         dataset = fetch_task.outputs["dataset"],
         scaler = pre_processing_task.outputs["scaler"],
         label_encoder = pre_processing_task.outputs["label_encoder"],
     )
-
-
+    kubernetes.use_secret_as_env(
+        register_model_task,
+        secret_name=data_connection_secret_name,
+        secret_key_to_env={
+            'AWS_S3_ENDPOINT': 'AWS_S3_ENDPOINT',
+            'AWS_ACCESS_KEY_ID': 'AWS_ACCESS_KEY_ID',
+            'AWS_SECRET_ACCESS_KEY': 'AWS_SECRET_ACCESS_KEY',
+            'AWS_S3_BUCKET': 'AWS_S3_BUCKET',
+        },
+    )
     # Set PVC to store model artifacts
     register_model_task.after(model_validation_task)
     kubernetes.mount_pvc(
@@ -99,6 +108,7 @@ def training_pipeline(hyperparameters: dict, model_name: str, version: str, clus
         pvc_name=model_storage_pvc,
         mount_path='/models',
     )
+    
 
 if __name__ == '__main__':
     metadata = {
@@ -107,8 +117,9 @@ if __name__ == '__main__':
         },
         "model_name": "jukebox",
         "version": "0.0.2",
-        "cluster_domain": "<CLUSER_DOMAIN>", # 👈 add your cluster domain here
-        "model_storage_pvc": "jukebox-model-pvc"
+        "cluster_domain": "apps.cluster-vx2f5.vx2f5.sandbox784.opentlc.com",
+        "model_storage_pvc": "jukebox-model-pvc",
+        "prod_flag": False
     }
         
     namespace_file_path =\
