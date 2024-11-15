@@ -104,7 +104,6 @@ def push_to_model_registry(
     
     model_object_prefix = model_name if model_name else "model"
     version = version if version else datetime.now().strftime('%y%m%d%H%M')
-    cluster_domain = cluster_domain
         
     def _register_model(author_name , server_address, model_object_prefix, version):
         registry = ModelRegistry(server_address=server_address, port=443, author=author_name, is_secure=False)
