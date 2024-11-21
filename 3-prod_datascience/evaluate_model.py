@@ -66,17 +66,18 @@ def evaluate_keras_model_performance(
     if "accuracy" not in previous_model_properties:
         previous_model_properties["accuracy"] = 0.0
 
-    print("Previos model metrics: ", previous_model_properties)
+    print("Previous model metrics: ", previous_model_properties)
+    print("Accuracy: ", accuracy)
 
-    metrics.log_metric("Accuracy", accuracy)
-    metrics.log_metric("Prev Model Accuracy", previous_model_properties["accuracy"])
+    metrics.log_metric("Accuracy", float(accuracy))
+    metrics.log_metric("Prev Model Accuracy", float(previous_model_properties["accuracy"]))
     
     cmatrix = confusion_matrix(y_test_argmax,y_pred_argmax)
     cmatrix = cmatrix.tolist()
     targets = label_encoder_.classes_.tolist()
     classification_metrics.log_confusion_matrix(targets, cmatrix)
     
-    if accuracy <= previous_model_properties["accuracy"]:
+    if float(accuracy) <= float(previous_model_properties["accuracy"]):
         raise Exception("Accuracy is lower than the previous models")
         
 @component(base_image="tensorflow/tensorflow", packages_to_install=["onnxruntime", "pandas", "scikit-learn"])
