@@ -18,6 +18,7 @@ def evaluate_keras_model_performance(
     label_encoder: Input[Model],
     model_name: str,
     cluster_domain: str,
+    version: str,
     metrics: Output[Metrics],
     classification_metrics: Output[ClassificationMetrics]
 ):
