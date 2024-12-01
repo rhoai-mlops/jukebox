@@ -64,7 +64,7 @@ def evaluate_keras_model_performance(
         pass
 
     if "accuracy" not in previous_model_properties:
-        previous_model_properties["accuracy"] = 0.0
+        previous_model_properties["accuracy"] = 0.1
 
     print("Previous model metrics: ", previous_model_properties)
     print("Accuracy: ", accuracy)

@@ -71,6 +71,7 @@ def training_pipeline(hyperparameters: dict, model_name: str, version: str, clus
         model_name = model_name,
         cluster_domain = cluster_domain,
     )
+    model_evaluation_task.set_caching_options(False) # Always recalculate model performance so that we can accurately compare with previous model.
     kubernetes.use_field_path_as_env(
         model_evaluation_task,
         env_name='NAMESPACE',
