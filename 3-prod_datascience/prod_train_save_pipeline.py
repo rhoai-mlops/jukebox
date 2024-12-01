@@ -70,8 +70,8 @@ def training_pipeline(hyperparameters: dict, model_name: str, version: str, clus
         label_encoder = pre_processing_task.outputs["label_encoder"],
         model_name = model_name,
         cluster_domain = cluster_domain,
+        version = version, # Add version to force a rerun of this step every new version
     )
-    model_evaluation_task.set_caching_options(False) # Always recalculate model performance so that we can accurately compare with previous model.
     kubernetes.use_field_path_as_env(
         model_evaluation_task,
         env_name='NAMESPACE',
