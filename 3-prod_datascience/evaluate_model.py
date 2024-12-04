@@ -78,7 +78,7 @@ def evaluate_keras_model_performance(
     targets = label_encoder_.classes_.tolist()
     classification_metrics.log_confusion_matrix(targets, cmatrix)
     
-    if float(accuracy) <= 0.1#float(previous_model_properties["accuracy"]):
+    if float(accuracy) <= 0.1: #float(previous_model_properties["accuracy"]):
         raise Exception("Accuracy is lower than the previous models")
         
 @component(base_image="tensorflow/tensorflow", packages_to_install=["onnxruntime", "pandas", "scikit-learn"])
