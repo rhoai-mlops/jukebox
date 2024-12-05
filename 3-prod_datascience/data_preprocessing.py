@@ -51,8 +51,10 @@ def preprocess_data(
     X_train, X_test, y_train, y_test = train_test_split(X, y_one_hot, test_size = 0.2, shuffle = False)
     X_train, X_val, y_train, y_val = train_test_split(X_train,y_train, test_size = 0.2, stratify = y_train)
 
-    # Scale the data to remove mean and have unit variance. The data will be between -1 and 1, which makes it a lot easier for the model to learn than random (and potentially large) values.
-    # It is important to only fit the scaler to the training data, otherwise you are leaking information about the global distribution of variables (which is influenced by the test set) into the training set.
+    # Scale the data to remove mean and have unit variance. The data will be between -1 and 1, which makes 
+    # it a lot easier for the model to learn than random (and potentially large) values.
+    # It is important to only fit the scaler to the training data, otherwise you are leaking information about 
+    # the global distribution of variables (which is influenced by the test set) into the training set.
     scaler_ = MinMaxScaler()
     X_train = scaler_.fit_transform(X_train.values)
     
