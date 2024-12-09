@@ -120,7 +120,7 @@ def push_to_model_registry(
             model_format_name="onnx",
             model_format_version="1",
             version=version_name,
-            description=f"Model {registered_model_name} version {version}",
+            description=f"{registered_model_name} is a dense neural network. Built with Keras and it has 4 layers. It's been trained on a music dataset consisting of 14K songs and 1.1M data points where the songs are popular. To use send an array of 13 normalized values representing the song features to the input layer is called `input`. The output layer is called `outputs` and will return 72 values, each representing the probability that the song will be popular in that country.",
             metadata=metadata
         )
         print("Model registered successfully")
