@@ -34,7 +34,8 @@ def training_pipeline(hyperparameters: dict, model_name: str, version: str, clus
     # Fetch Data
     # fetch_task = fetch_data()
     fetch_task = fetch_data_from_dvc(
-        cluster_domain = cluster_domain
+        cluster_domain = cluster_domain,
+        git_version = version
     )
     kubernetes.use_field_path_as_env(
         fetch_task,

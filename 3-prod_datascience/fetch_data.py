@@ -33,7 +33,8 @@ def fetch_data(
 @component(base_image='python:3.9', packages_to_install=["dvc[s3]==3.1.0", "dask[dataframe]", "s3fs", "pandas"])
 def fetch_data_from_dvc(
     dataset: Output[Dataset],
-    cluster_domain: str
+    cluster_domain: str,
+    git_version: str,
 ):
     """
     Fetches data from DVC
@@ -70,6 +71,11 @@ def fetch_data_from_dvc(
 
     run_command(f"git clone https://gitea-gitea.{cluster_domain}/{namespace}/jukebox.git")
     os.chdir("/tmp/jukebox")
+    try:
+        run_command(f"git checkout {git_version}")
+    except Exception as e:
+        print(e)
+        print(f"Could not check out version {git_version}")
     run_command("dvc pull")
 
     config = configparser.ConfigParser()
