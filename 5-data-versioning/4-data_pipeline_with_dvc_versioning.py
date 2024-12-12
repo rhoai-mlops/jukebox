@@ -9,9 +9,9 @@ from kfp.dsl import (
 )
 from kfp import kubernetes
 
-USER = "<USER_NAME>"
-DATASET = "song_properties.parquet"
-CLUSTER_DOMAIN = "<CLUSTER_DOMAIN>"
+USER = ""
+DATASET = ""
+CLUSTER_DOMAIN = ""
 
 @component(packages_to_install=["pyarrow", "pandas"])
 def extract_data(
@@ -116,7 +116,6 @@ def setup_dvc_repository_with_env_credentials(
         git_repo = git.Repo(".")
         git_repo.config_writer().set_value("user", "email", email).release()
         git_repo.config_writer().set_value("user", "name", git_username).release()
-        # run_command(["git add"] + to_commit)
         for file in to_commit:
             run_command(f"git add {file}")
         git_repo.index.commit(commit_message)
