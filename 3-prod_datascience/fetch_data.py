@@ -10,9 +10,7 @@ from kfp.dsl import (
 
 @component(base_image='python:3.9', packages_to_install=["dask[dataframe]", "s3fs", "pandas"])
 def fetch_data(
-    dataset: Output[Dataset],
-    cluster_domain: str,
-    username: str
+    dataset: Output[Dataset]
 ):
     """
     Fetches data from URL
@@ -45,6 +43,9 @@ def fetch_data_from_dvc(
     import yaml
     import dvc
     import configparser
+    import os
+    import subprocess
+    import git
     
     def run_command(command, cwd=None, env=None):
         result = subprocess.run(command, shell=True, cwd=cwd, text=True, capture_output=True, env=env)
@@ -57,25 +58,26 @@ def fetch_data_from_dvc(
             dvc_data = yaml.safe_load(file)
             md5_hash = dvc_data['outs'][0]['md5']
         return md5_hash
-
+    
     current_path = os.environ.get("PATH", "")
     new_path = f"{current_path}:/.local/bin"
     os.environ["PATH"] = new_path
     
     print("Updated PATH:", os.environ["PATH"])
 
-    namespace = environ.get("namespace").split('-')[0]
-    
+    namespace = os.environ.get("namespace").split('-')[0]
+    os.chdir("/tmp")
+
     run_command(f"git clone https://gitea-gitea.{cluster_domain}/{namespace}/jukebox.git")
-    os.chdir("jukebox")
+    os.chdir("/tmp/jukebox")
     run_command("dvc pull")
 
     config = configparser.ConfigParser()
     config.read('.dvc/config')
 
-    song_rankings = pd.read_parquet('https://github.com/rhoai-mlops/jukebox/raw/refs/heads/main/99-data_prep/song_rankings.parquet') 
     song_properties = pd.read_parquet("song_properties.parquet")
-
+    song_rankings = pd.read_parquet('https://github.com/rhoai-mlops/jukebox/raw/refs/heads/main/99-data_prep/song_rankings.parquet')
+    
     data = song_rankings.merge(song_properties, on='spotify_id', how='left')
     
     dataset.path += ".csv"
