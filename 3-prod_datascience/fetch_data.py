@@ -82,8 +82,7 @@ def fetch_data_from_dvc(
     
     dataset.path += ".csv"
     dvc_hash = read_hash("song_properties.parquet.dvc")
-    # print({section: dict(config[section]) for section in config.sections()})
-    dataset.metadata = {"DVC training data hash": dvc_hash}
+    dataset.metadata = {"DVC training data hash": dvc_hash} | {section: str(dict(config.items(section))) for section in config.sections()}
     data.to_csv(dataset.path, index=False, header=True)
 
 

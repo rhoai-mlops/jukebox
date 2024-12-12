@@ -132,7 +132,7 @@ if __name__ == '__main__':
         },
         "model_name": "jukebox",
         "version": "0.0.2",
-        "cluster_domain": "apps.cluster-99j44.99j44.sandbox2548.opentlc.com", # 👈 add your cluster domain here
+        "cluster_domain": "<CLUSTER_DOMAIN>", # 👈 add your cluster domain here
         "model_storage_pvc": "jukebox-model-pvc",
         "prod_flag": False
     }
