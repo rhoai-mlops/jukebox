@@ -9,9 +9,9 @@ from kfp.dsl import (
 )
 from kfp import kubernetes
 
-USER = "user15"
-DATASET = "small_song_properties.parquet"
-CLUSTER_DOMAIN = "apps.cluster-99j44.99j44.sandbox2548.opentlc.com"
+USER = ""
+DATASET = ""
+CLUSTER_DOMAIN = ""
 
 @component(packages_to_install=["pyarrow", "pandas"])
 def extract_data(
