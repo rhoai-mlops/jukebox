@@ -14,7 +14,7 @@ from kfp import kubernetes
 import os
 
 # Component imports
-from fetch_data import fetch_data, fetch_data_from_feast
+from fetch_data import fetch_data, fetch_data_from_dvc, fetch_data_from_feast
 from data_validation import validate_data
 from data_preprocessing import preprocess_data
 from train_model import train_model, convert_keras_to_onnx
@@ -32,7 +32,15 @@ data_connection_secret_name = 'aws-connection-models'
 )
 def training_pipeline(hyperparameters: dict, model_name: str, version: str, cluster_domain: str, model_storage_pvc: str, prod_flag: bool):
     # Fetch Data
-    fetch_task = fetch_data()
+    # fetch_task = fetch_data()
+    fetch_task = fetch_data_from_dvc(
+        cluster_domain = cluster_domain
+    )
+    kubernetes.use_field_path_as_env(
+        fetch_task,
+        env_name='namespace',
+        field_path='metadata.namespace'
+    )
     # kubernetes.use_secret_as_env(
     #     fetch_task,
     #     secret_name='aws-connection-data',
@@ -124,7 +132,7 @@ if __name__ == '__main__':
         },
         "model_name": "jukebox",
         "version": "0.0.2",
-        "cluster_domain": "<CLUSTER_DOMAIN>", # 👈 add your cluster domain here
+        "cluster_domain": "apps.cluster-99j44.99j44.sandbox2548.opentlc.com", # 👈 add your cluster domain here
         "model_storage_pvc": "jukebox-model-pvc",
         "prod_flag": False
     }
