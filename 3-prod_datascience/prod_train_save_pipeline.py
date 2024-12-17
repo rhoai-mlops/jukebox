@@ -155,5 +155,5 @@ if __name__ == '__main__':
         training_pipeline,
         arguments=metadata,
         experiment_name="training",
-        enable_caching=True
+        enable_caching=False
     )
