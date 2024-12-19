@@ -14,7 +14,7 @@ from kfp import kubernetes
 import os
 
 # Component imports
-from fetch_data import fetch_data, fetch_data_from_feast
+from fetch_data import fetch_data, fetch_data_from_dvc, fetch_data_from_feast
 from data_validation import validate_data
 from data_preprocessing import preprocess_data
 from train_model import train_model, convert_keras_to_onnx
@@ -32,7 +32,16 @@ data_connection_secret_name = 'aws-connection-models'
 )
 def training_pipeline(hyperparameters: dict, model_name: str, version: str, cluster_domain: str, model_storage_pvc: str, prod_flag: bool):
     # Fetch Data
-    fetch_task = fetch_data()
+    # fetch_task = fetch_data()
+    fetch_task = fetch_data_from_dvc(
+        cluster_domain = cluster_domain,
+        git_version = version
+    )
+    kubernetes.use_field_path_as_env(
+        fetch_task,
+        env_name='namespace',
+        field_path='metadata.namespace'
+    )
     # kubernetes.use_secret_as_env(
     #     fetch_task,
     #     secret_name='aws-connection-data',
