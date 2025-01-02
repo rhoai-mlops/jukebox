@@ -111,8 +111,7 @@ def push_to_model_registry(
         version_name = version
         metadata = {
             "accuracy": str(metrics.metadata['Accuracy']),
-            "dataset": json.dumps(dataset.metadata)
-        }
+        } | dataset.metadata
         
         rm = registry.register_model(
             registered_model_name,

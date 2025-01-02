@@ -8,7 +8,7 @@ from kfp.dsl import (
     Metrics,
 )
 
-@component(base_image='python:3.9', packages_to_install=["feast==0.36.0", "psycopg2>=2.9", "dask[dataframe]", "s3fs", "pandas"])
+@component(base_image='python:3.9', packages_to_install=["dask[dataframe]", "s3fs", "pandas"])
 def fetch_data(
     dataset: Output[Dataset]
 ):
@@ -17,7 +17,8 @@ def fetch_data(
     """
     
     import pandas as pd
-    import yaml    
+    import yaml
+    import os
     
     song_properties = pd.read_parquet('https://github.com/rhoai-mlops/jukebox/raw/refs/heads/main/99-data_prep/song_properties.parquet')
     song_rankings = pd.read_parquet('https://github.com/rhoai-mlops/jukebox/raw/refs/heads/main/99-data_prep/song_rankings.parquet')
@@ -26,6 +27,68 @@ def fetch_data(
     
     dataset.path += ".csv"
     dataset.metadata = {"song_properties": "https://github.com/rhoai-mlops/jukebox/raw/refs/heads/main/99-data_prep/song_properties.parquet", "song_rankings": "https://github.com/rhoai-mlops/jukebox/raw/refs/heads/main/99-data_prep/song_rankings.parquet" }
+    data.to_csv(dataset.path, index=False, header=True)
+
+
+@component(base_image='python:3.9', packages_to_install=["dvc[s3]==3.1.0", "dask[dataframe]", "s3fs", "pandas"])
+def fetch_data_from_dvc(
+    dataset: Output[Dataset],
+    cluster_domain: str,
+    git_version: str,
+):
+    """
+    Fetches data from DVC
+    """
+    
+    import pandas as pd
+    import yaml
+    import dvc
+    import configparser
+    import os
+    import subprocess
+    import git
+    
+    def run_command(command, cwd=None, env=None):
+        result = subprocess.run(command, shell=True, cwd=cwd, text=True, capture_output=True, env=env)
+        if result.returncode != 0:
+            raise RuntimeError(f"Command failed: {command}\n{result.stderr}")
+        return result.stdout.strip()
+        
+    def read_hash(dvc_file_path):
+        with open(dvc_file_path, 'r') as file:
+            dvc_data = yaml.safe_load(file)
+            md5_hash = dvc_data['outs'][0]['md5']
+        return md5_hash
+    
+    current_path = os.environ.get("PATH", "")
+    new_path = f"{current_path}:/.local/bin"
+    os.environ["PATH"] = new_path
+    
+    print("Updated PATH:", os.environ["PATH"])
+
+    namespace = os.environ.get("namespace").split('-')[0]
+    os.chdir("/tmp")
+
+    run_command(f"git clone https://gitea-gitea.{cluster_domain}/{namespace}/jukebox.git")
+    os.chdir("/tmp/jukebox")
+    try:
+        run_command(f"git checkout {git_version}")
+    except Exception as e:
+        print(e)
+        print(f"Could not check out version {git_version}")
+    run_command("dvc pull")
+
+    config = configparser.ConfigParser()
+    config.read('.dvc/config')
+
+    song_properties = pd.read_parquet("song_properties.parquet")
+    song_rankings = pd.read_parquet('https://github.com/rhoai-mlops/jukebox/raw/refs/heads/main/99-data_prep/song_rankings.parquet')
+    
+    data = song_rankings.merge(song_properties, on='spotify_id', how='left')
+    
+    dataset.path += ".csv"
+    dvc_hash = read_hash("song_properties.parquet.dvc")
+    dataset.metadata = {"DVC training data hash": dvc_hash} | {section: str(dict(config.items(section))) for section in config.sections()}
     data.to_csv(dataset.path, index=False, header=True)
 
 

@@ -14,7 +14,7 @@ from kfp import kubernetes
 import os
 
 # Component imports
-from fetch_data import fetch_data, fetch_data_from_feast
+from fetch_data import fetch_data, fetch_data_from_dvc, fetch_data_from_feast
 from data_validation import validate_data
 from data_preprocessing import preprocess_data
 from train_model import train_model, convert_keras_to_onnx
@@ -31,18 +31,12 @@ data_connection_secret_name = 'aws-connection-models'
   description='We train an amazing model 🚂'
 )
 def training_pipeline(hyperparameters: dict, model_name: str, version: str, cluster_domain: str, model_storage_pvc: str, prod_flag: bool):
-    # Fetch Data
+    ### 🐶 Fetch Data from GitHub
     fetch_task = fetch_data()
-    # kubernetes.use_secret_as_env(
-    #     fetch_task,
-    #     secret_name='aws-connection-data',
-    #     secret_key_to_env={
-    #         'AWS_S3_ENDPOINT': 'AWS_S3_ENDPOINT',
-    #         'AWS_ACCESS_KEY_ID': 'AWS_ACCESS_KEY_ID',
-    #         'AWS_SECRET_ACCESS_KEY': 'AWS_SECRET_ACCESS_KEY',
-    #         'AWS_S3_BUCKET': 'AWS_S3_BUCKET',
-    #     },
-    # )
+
+    ### 🍇 Fetch Data from DVC
+
+    ### 🛍️ Fetch Data from Feast
 
     # Validate Data
     data_validation_task = validate_data(dataset = fetch_task.outputs["dataset"])
