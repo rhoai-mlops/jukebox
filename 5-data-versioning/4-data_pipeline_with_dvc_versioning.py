@@ -209,7 +209,7 @@ def etl_pipeline(dataset_url: str, repo_url: str):
     setup_dvc_task.after(load_task)
 
 def main():
-    COMPILE=False
+    COMPILE=True
     if COMPILE:
         kfp.compiler.Compiler().compile(etl_pipeline, 'song-properties-etl.yaml')
     else:
