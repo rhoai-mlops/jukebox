@@ -1,3 +1,4 @@
+import os
 from datetime import timedelta
 
 import pandas as pd
@@ -13,7 +14,7 @@ music = Entity(name="music", join_keys=["spotify_id"])
 music_source = FileSource(
     name="music_s3",
     path="s3://data/song_properties.parquet",
-    s3_endpoint_override="http://minio-service.mlops-feature-store.svc.cluster.local:9000",
+    s3_endpoint_override=os.environ.get('AWS_S3_ENDPOINT'),
     file_format=ParquetFormat(),
     timestamp_field="snapshot_date",
 )
