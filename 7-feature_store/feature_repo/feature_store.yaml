@@ -2,7 +2,7 @@ project: music
 provider: local
 registry:
     registry_type: sql
-    path: postgresql+psycopg2://feast:feast@feast:5432/feast
+    path: postgresql://feast:feast@feast:5432/feast
     cache_ttl_seconds: 60
     sqlalchemy_config_kwargs:
         echo: false
