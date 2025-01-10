@@ -111,7 +111,7 @@ def fetch_data_from_feast(
         'provider': 'local',
         'registry': {
             'registry_type': 'sql',
-            'path': 'postgresql+psycopg2://feast:feast@feast.{your-namespace}.svc.cluster.local:5432/feast',
+            'path': 'postgresql://feast:feast@feast:5432/feast',
             'cache_ttl_seconds': 60,
             'sqlalchemy_config_kwargs': {
                 'echo': False, 
@@ -120,7 +120,7 @@ def fetch_data_from_feast(
         },
         'online_store': {
             'type': 'postgres',
-            'host': 'feast.{your-namespace}.svc.cluster.local',
+            'host': 'feast',
             'port': 5432,
             'database': 'feast',
             'db_schema': 'feast',
@@ -130,6 +130,7 @@ def fetch_data_from_feast(
         'offline_store': {'type': 'file'},
         'entity_key_serialization_version': 2
     }
+
     fs_config = feast.repo_config.RepoConfig(**fs_config_json)
     fs = feast.FeatureStore(config=fs_config)
 
