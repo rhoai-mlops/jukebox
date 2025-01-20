@@ -8,14 +8,13 @@ from kfp.dsl import (
     Metrics,
 )
 
+
 @component()
-def validate_data(
-    dataset: Input[Dataset]
-) -> bool:
+def validate_data(dataset: Input[Dataset]) -> bool:
     """
     Validates if the data schema is correct and if the values are reasonable.
     """
-    
+
     if not dataset.path:
         raise Exception("dataset not found")
     return True
