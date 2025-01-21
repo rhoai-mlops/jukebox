@@ -48,8 +48,8 @@ def preprocess_data(
     y_one_hot = tf.keras.utils.to_categorical(y_encoded)
 
     # Split the data into training and testing sets so you have something to test the trained model with.
-    X_train, X_test, y_train, y_test = train_test_split(X, y_one_hot, test_size = 0.2, shuffle = False)
-    X_train, X_val, y_train, y_val = train_test_split(X_train,y_train, test_size = 0.2, stratify = y_train)
+    X_train, X_test, y_train, y_test = train_test_split(X, y_one_hot, test_size = 0.2, shuffle = False, random_state=42)
+    X_train, X_val, y_train, y_val = train_test_split(X_train,y_train, test_size = 0.2, stratify = y_train, random_state=42)
 
     # Scale the data to remove mean and have unit variance. The data will be between -1 and 1, which makes 
     # it a lot easier for the model to learn than random (and potentially large) values.
