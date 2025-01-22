@@ -22,7 +22,9 @@ def train_model(
     """
     
     from keras.models import Sequential
-    from keras.layers import Dense, Dropout, BatchNormalization, Activation
+    from keras.layers import Dense, Dropout, BatchNormalization, Activation, Concatenate
+    from keras.layers import Input as KerasInput
+    from tensorflow.keras.models import Model as KerasModel
     import pickle
     import pandas as pd
     import sklearn
@@ -33,23 +35,32 @@ def train_model(
         X_val, y_val = pd.read_pickle(pickle_file)
     with open(scaler.path, 'rb') as pickle_file:
         scaler_ = pd.read_pickle(pickle_file)
-    
-    model = Sequential()
-    model.add(Dense(32, activation = 'relu', input_dim = X_train.shape[1], name="input"))
-    model.add(Dense(64, name="dense_1"))
-    model.add(Activation('relu'))
-    model.add(Dense(128, name="dense_2"))
-    model.add(Activation('relu'))
-    model.add(Dense(256, name="dense_3"))
-    model.add(Activation('relu'))
-    model.add(Dense(y_train.shape[1], activation = 'sigmoid', name="dense_4"))
-    model.compile(optimizer='adam',loss='categorical_crossentropy',metrics=['accuracy', 'Precision', 'Recall'])
+
+    inputs = [KerasInput(shape=(1,), name=name) for name in X_train.columns]
+    concatenated_inputs = Concatenate(name="input")(inputs)
+    x = Dense(32, activation='relu', name="dense_0")(concatenated_inputs)
+    x = Dense(64, name="dense_1")(x)
+    x = Activation('relu')(x)
+    x = Dense(128, name="dense_2")(x)
+    x = Activation('relu')(x)
+    x = Dense(256, name="dense_3")(x)
+    x = Activation('relu')(x)
+    output = Dense(y_train.shape[1], activation='sigmoid', name="dense_4")(x)
+    model = KerasModel(inputs=inputs, outputs=output)
+    model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy', 'Precision', 'Recall'])
     model.summary()
+
+    train_inputs = {name: X_train[[name]].to_numpy() for name in X_train.columns}
+    val_inputs = {name: X_val[[name]].to_numpy() for name in X_val.columns}
     
     epochs = hyperparameters["epochs"]
-    history = model.fit(X_train, y_train, epochs=epochs, \
-                        validation_data=(scaler_.transform(X_val.values),y_val), \
-                        verbose = True)
+    history = model.fit(
+        train_inputs,
+        y_train,
+        epochs=epochs,
+        validation_data=(val_inputs, y_val),
+        verbose=True
+    )
     print("Training of model is complete")
     
     trained_model.path += ".keras"

@@ -39,8 +39,11 @@ def preprocess_data(
     df = pd.read_csv(in_data.path)
     df = df.dropna()
     print(df.head())
-    
-    X = df[['is_explicit', 'duration_ms', 'danceability', 'energy', 'key', 'loudness', 'mode', 'speechiness', 'acousticness', 'instrumentalness', 'liveness', 'valence', 'tempo']]
+
+    if "features" in in_data.metadata:
+        X = df[in_data.metadata["features"]["list"]]
+    else:
+        X = df[['is_explicit', 'duration_ms', 'danceability', 'energy', 'key', 'loudness', 'mode', 'speechiness', 'acousticness', 'instrumentalness', 'liveness', 'valence', 'tempo']]
     y = df['country']
 
     label_encoder_ = LabelEncoder()
@@ -56,7 +59,9 @@ def preprocess_data(
     # It is important to only fit the scaler to the training data, otherwise you are leaking information about 
     # the global distribution of variables (which is influenced by the test set) into the training set.
     scaler_ = MinMaxScaler()
-    X_train = scaler_.fit_transform(X_train.values)
+    scaled_x_train = pd.DataFrame(scaler_.fit_transform(X_train), index=X_train.index, columns=X_train.columns)
+    scaled_x_val = pd.DataFrame(scaler_.transform(X_val), index=X_val.index, columns=X_val.columns)
+    scaled_x_test = pd.DataFrame(scaler_.transform(X_test), index=X_test.index, columns=X_test.columns).astype(np.float32)
     
     train_data.path += ".pkl"
     val_data.path += ".pkl"
@@ -65,11 +70,11 @@ def preprocess_data(
     label_encoder.path += ".pkl"
     
     with open(train_data.path, "wb") as handle:
-        pickle.dump((X_train, y_train), handle)
+        pickle.dump((scaled_x_train, y_train), handle)
     with open(val_data.path, "wb") as handle:
-        pickle.dump((X_val, y_val), handle)
+        pickle.dump((scaled_x_val, y_val), handle)
     with open(test_data.path, "wb") as handle:
-        pickle.dump((X_test, y_test), handle)
+        pickle.dump((scaled_x_test, y_test), handle)
     with open(scaler.path, "wb") as handle:
         pickle.dump(scaler_, handle)
     with open(label_encoder.path, "wb") as handle:

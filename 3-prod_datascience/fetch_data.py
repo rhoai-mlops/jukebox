@@ -143,7 +143,9 @@ def fetch_data_from_feast(
     feature_service = fs.get_feature_service("serving_fs")
 
     data = fs.get_historical_features(entity_df=song_rankings, features=feature_service).to_df()
+
+    features = [f.name for f in feature_service.feature_view_projections[0].features]
     
-    dataset.metadata = {"song_properties": "serving_fs", "song_rankings": "https://github.com/rhoai-mlops/jukebox/raw/refs/heads/main/99-data_prep/song_rankings.parquet" }
+    dataset.metadata = {"song_properties": "serving_fs", "song_rankings": "https://github.com/rhoai-mlops/jukebox/raw/refs/heads/main/99-data_prep/song_rankings.parquet", "features": features}
     dataset.path += ".csv"
     data.to_csv(dataset.path, index=False, header=True)
