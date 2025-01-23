@@ -10,7 +10,7 @@ from kfp.dsl import (
 )
 from typing import NamedTuple
 
-@component(base_image="tensorflow/tensorflow", packages_to_install=["pandas", "scikit-learn"])
+@component(base_image="tensorflow/tensorflow:2.15.0", packages_to_install=["pandas", "scikit-learn"])
 def preprocess_data(
     in_data: Input[Dataset],
     train_data: Output[Dataset],

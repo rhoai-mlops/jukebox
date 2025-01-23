@@ -9,7 +9,7 @@ from kfp.dsl import (
     Model,
 )
 
-@component(base_image="tensorflow/tensorflow", packages_to_install=[ "pandas", "scikit-learn"])
+@component(base_image="tensorflow/tensorflow:2.15.0", packages_to_install=[ "pandas", "scikit-learn"])
 def train_model(
     train_data: Input[Dataset],
     val_data: Input[Dataset],
@@ -67,7 +67,7 @@ def train_model(
     model.save(trained_model.path)
     
     
-@component(base_image="tensorflow/tensorflow", packages_to_install=["tf2onnx", "onnx", "pandas", "scikit-learn"])
+@component(base_image="tensorflow/tensorflow:2.15.0", packages_to_install=["tf2onnx", "onnx", "pandas", "scikit-learn"])
 def convert_keras_to_onnx(
     keras_model: Input[Model],
     onnx_model: Output[Model],
@@ -77,7 +77,7 @@ def convert_keras_to_onnx(
     import tensorflow as tf
     
     trained_keras_model = keras.saving.load_model(keras_model.path)
-    input_signature = [tf.TensorSpec(trained_keras_model.inputs[0].shape, trained_keras_model.inputs[0].dtype, name='input')]
+    input_signature = [tf.TensorSpec(input_.shape, input_.dtype, input_.name) for input_ in trained_keras_model.inputs]
     trained_keras_model.output_names = ['output']
     onnx_model_proto, _ = tf2onnx.convert.from_keras(trained_keras_model, input_signature)
     
