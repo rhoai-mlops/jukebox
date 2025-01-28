@@ -24,6 +24,7 @@ def push_to_model_registry(
     version: str,
     cluster_domain: str,
     prod_flag: bool,
+    keras_model: Input[Model],
     model: Input[Model],
     metrics: Input[Metrics],
     scaler: Input[Model],
@@ -41,6 +42,7 @@ def push_to_model_registry(
         # Save to PVC
         makedirs("/models/artifacts", exist_ok=True)
         shutil.copyfile(model.path, f"/models/{model_name}.onnx")
+        shutil.copyfile(keras_model.path, f"/models/{model_name}.keras")
         shutil.copyfile(scaler.path, f"/models/artifacts/scaler.pkl")
         shutil.copyfile(label_encoder.path, f"/models/artifacts/label_encoder.pkl")
     else:
