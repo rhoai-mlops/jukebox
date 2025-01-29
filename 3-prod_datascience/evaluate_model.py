@@ -10,7 +10,7 @@ from kfp.dsl import (
     ClassificationMetrics,
 )
 
-@component(base_image="tensorflow/tensorflow", packages_to_install=["tf2onnx", "onnx", "pandas", "scikit-learn", "model-registry==0.2.10"])
+@component(base_image="tensorflow/tensorflow:2.15.0", packages_to_install=["tf2onnx", "onnx", "pandas", "scikit-learn", "model-registry==0.2.10"])
 def evaluate_keras_model_performance(
     model: Input[Model],
     test_data: Input[Dataset],
@@ -37,8 +37,9 @@ def evaluate_keras_model_performance(
         scaler_ = pd.read_pickle(pickle_file)
     with open(label_encoder.path, 'rb') as pickle_file:
         label_encoder_ = pd.read_pickle(pickle_file)
-    
-    y_pred_temp = trained_model.predict(scaler_.transform(X_test.values))
+
+    test_inputs = {name: X_test[[name]].to_numpy() for name in X_test.columns}
+    y_pred_temp = trained_model.predict(test_inputs)
     y_pred_temp = np.asarray(np.squeeze(y_pred_temp))
     
     y_pred_argmax = np.argmax(y_pred_temp, axis=1)
@@ -81,7 +82,7 @@ def evaluate_keras_model_performance(
     if float(accuracy) <= 0.01: #float(previous_model_properties["accuracy"]):
         raise Exception("Accuracy is lower than the previous models")
         
-@component(base_image="tensorflow/tensorflow", packages_to_install=["onnxruntime", "pandas", "scikit-learn"])
+@component(base_image="tensorflow/tensorflow:2.15.0", packages_to_install=["onnxruntime", "pandas", "scikit-learn"])
 def validate_onnx_model(
     onnx_model: Input[Model],
     keras_model: Input[Model],
@@ -99,12 +100,13 @@ def validate_onnx_model(
         scaler_ = pd.read_pickle(pickle_file)
     _keras_model = keras.saving.load_model(keras_model.path)
     onnx_session = rt.InferenceSession(onnx_model.path, providers=rt.get_available_providers())
-    
-    onnx_input_name = onnx_session.get_inputs()[0].name
+
+    test_inputs = {name: X_test[[name]].to_numpy() for name in X_test.columns}
+
     onnx_output_name = onnx_session.get_outputs()[0].name
-    onnx_pred = onnx_session.run([onnx_output_name], {onnx_input_name: scaler_.transform(X_test.values).astype(np.float32)})
+    onnx_pred = onnx_session.run([onnx_output_name], test_inputs)
     
-    keras_pred = _keras_model(scaler_.transform(X_test.values).astype(np.float32))
+    keras_pred = _keras_model(test_inputs)
     
     print("Keras Pred: ", keras_pred)
     print("ONNX Pred: ", onnx_pred[0])
