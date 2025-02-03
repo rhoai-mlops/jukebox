@@ -7,6 +7,7 @@ from kfp.dsl import (
     Dataset,
     Metrics,
     Model,
+    Artifact,
 )
 
 @component(base_image="tensorflow/tensorflow:2.15.0", packages_to_install=[ "pandas", "scikit-learn"])
@@ -15,11 +16,19 @@ def train_model(
     val_data: Input[Dataset],
     scaler: Input[Model],
     hyperparameters: dict,
-    trained_model: Output[Model]
+    trained_model: Output[Model],
+    training_dependencies: Output[Artifact],
 ):
     """
     Trains a dense tensorflow model.
     """
+
+    def save_pip_freeze(filename="frozen_requirements.txt"):
+        with open(filename, "w") as f:
+            subprocess.run(["pip", "freeze"], stdout=f, text=True)
+
+    training_dependencies.path+=".txt"
+    save_pip_freeze(training_dependencies.path)
     
     from keras.models import Sequential
     from keras.layers import Dense, Dropout, BatchNormalization, Activation, Concatenate

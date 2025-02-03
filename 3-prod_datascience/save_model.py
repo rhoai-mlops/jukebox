@@ -7,6 +7,7 @@ from kfp.dsl import (
     Dataset,
     Metrics,
     Model,
+    Artifact,
 )
 
 @component(
@@ -30,6 +31,7 @@ def push_to_model_registry(
     scaler: Input[Model],
     label_encoder: Input[Model],
     dataset: Input[Dataset],
+    training_dependencies: Input[Artifact],
 ):
     from os import environ, path, makedirs
     from datetime import datetime
@@ -45,6 +47,7 @@ def push_to_model_registry(
         shutil.copyfile(keras_model.path, f"/models/{model_name}.keras")
         shutil.copyfile(scaler.path, f"/models/artifacts/scaler.pkl")
         shutil.copyfile(label_encoder.path, f"/models/artifacts/label_encoder.pkl")
+        shutil.copyfile(training_dependencies.path, f"/models/artifacts/frozen_training_requirements.txt")
     else:
         # Save to S3
         model_object_prefix = model_name if model_name else "model"
