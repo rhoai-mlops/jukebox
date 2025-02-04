@@ -10,7 +10,7 @@ from kfp.dsl import (
     Artifact,
 )
 
-@component(base_image="tensorflow/tensorflow:2.15.0", packages_to_install=[ "pandas", "scikit-learn"])
+@component(base_image="tensorflow/tensorflow:2.15.0", packages_to_install=[ "pandas==2.2.3", "scikit-learn==1.6.1"])
 def train_model(
     train_data: Input[Dataset],
     val_data: Input[Dataset],

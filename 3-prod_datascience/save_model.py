@@ -10,15 +10,7 @@ from kfp.dsl import (
     Artifact,
 )
 
-@component(
-    base_image='python:3.9',
-    packages_to_install=[
-        'pip==24.2',  
-        'setuptools>=65.0.0', 
-        'boto3',
-        'model-registry==0.2.9'
-    ]
-)
+@component(base_image='python:3.9', packages_to_install=['pip==24.2', 'setuptools==74.1.3', 'boto3==1.36.12', 'model-registry==0.2.9'])
 
 def push_to_model_registry(
     model_name: str,
