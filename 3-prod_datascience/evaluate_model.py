@@ -10,7 +10,7 @@ from kfp.dsl import (
     ClassificationMetrics,
 )
 
-@component(base_image="tensorflow/tensorflow:2.15.0", packages_to_install=["tf2onnx", "onnx", "pandas", "scikit-learn", "model-registry==0.2.10"])
+@component(base_image="tensorflow/tensorflow:2.15.0", packages_to_install=["tf2onnx==1.16.1", "onnx==1.17.0", "pandas==2.2.3", "scikit-learn==1.6.1", "model-registry==0.2.10"])
 def evaluate_keras_model_performance(
     model: Input[Model],
     test_data: Input[Dataset],
@@ -82,7 +82,7 @@ def evaluate_keras_model_performance(
     if float(accuracy) <= 0.01: #float(previous_model_properties["accuracy"]):
         raise Exception("Accuracy is lower than the previous models")
         
-@component(base_image="tensorflow/tensorflow:2.15.0", packages_to_install=["onnxruntime", "pandas", "scikit-learn"])
+@component(base_image="tensorflow/tensorflow:2.15.0", packages_to_install=["onnxruntime==1.20.1", "pandas==2.2.3", "scikit-learn==1.6.1"])
 def validate_onnx_model(
     onnx_model: Input[Model],
     keras_model: Input[Model],

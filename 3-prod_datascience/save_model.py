@@ -7,17 +7,10 @@ from kfp.dsl import (
     Dataset,
     Metrics,
     Model,
+    Artifact,
 )
 
-@component(
-    base_image='python:3.9',
-    packages_to_install=[
-        'pip==24.2',  
-        'setuptools>=65.0.0', 
-        'boto3',
-        'model-registry==0.2.9'
-    ]
-)
+@component(base_image='python:3.9', packages_to_install=['pip==24.2', 'setuptools==74.1.3', 'boto3==1.36.12', 'model-registry==0.2.9'])
 
 def push_to_model_registry(
     model_name: str,
@@ -30,6 +23,7 @@ def push_to_model_registry(
     scaler: Input[Model],
     label_encoder: Input[Model],
     dataset: Input[Dataset],
+    training_dependencies: Input[Artifact],
 ):
     from os import environ, path, makedirs
     from datetime import datetime
@@ -45,6 +39,7 @@ def push_to_model_registry(
         shutil.copyfile(keras_model.path, f"/models/{model_name}.keras")
         shutil.copyfile(scaler.path, f"/models/artifacts/scaler.pkl")
         shutil.copyfile(label_encoder.path, f"/models/artifacts/label_encoder.pkl")
+        shutil.copyfile(training_dependencies.path, f"/models/artifacts/frozen_training_requirements.txt")
     else:
         # Save to S3
         model_object_prefix = model_name if model_name else "model"
@@ -113,7 +108,8 @@ def push_to_model_registry(
         version_name = version
         metadata = {
             "accuracy": str(metrics.metadata['Accuracy']),
-        } | dataset.metadata
+            "dataset_metadata": str(dataset.metadata),
+        }
         
         rm = registry.register_model(
             registered_model_name,

@@ -92,6 +92,7 @@ def training_pipeline(hyperparameters: dict, model_name: str, version: str, clus
         dataset = fetch_task.outputs["dataset"],
         scaler = pre_processing_task.outputs["scaler"],
         label_encoder = pre_processing_task.outputs["label_encoder"],
+        training_dependencies = training_task.outputs["training_dependencies"],
     )
     kubernetes.use_secret_as_env(
         register_model_task,

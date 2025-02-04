@@ -7,19 +7,28 @@ from kfp.dsl import (
     Dataset,
     Metrics,
     Model,
+    Artifact,
 )
 
-@component(base_image="tensorflow/tensorflow:2.15.0", packages_to_install=[ "pandas", "scikit-learn"])
+@component(base_image="tensorflow/tensorflow:2.15.0", packages_to_install=[ "pandas==2.2.3", "scikit-learn==1.6.1"])
 def train_model(
     train_data: Input[Dataset],
     val_data: Input[Dataset],
     scaler: Input[Model],
     hyperparameters: dict,
-    trained_model: Output[Model]
+    trained_model: Output[Model],
+    training_dependencies: Output[Artifact],
 ):
     """
     Trains a dense tensorflow model.
     """
+
+    def save_pip_freeze(filename="frozen_requirements.txt"):
+        with open(filename, "w") as f:
+            subprocess.run(["pip", "freeze"], stdout=f, text=True)
+
+    training_dependencies.path+=".txt"
+    save_pip_freeze(training_dependencies.path)
     
     from keras.models import Sequential
     from keras.layers import Dense, Dropout, BatchNormalization, Activation, Concatenate
@@ -67,7 +76,7 @@ def train_model(
     model.save(trained_model.path)
     
     
-@component(base_image="tensorflow/tensorflow:2.15.0", packages_to_install=["tf2onnx", "onnx", "pandas", "scikit-learn"])
+@component(base_image="tensorflow/tensorflow:2.15.0", packages_to_install=["tf2onnx==1.16.1", "onnx==1.17.0", "pandas==2.2.3", "scikit-learn==1.6.1"])
 def convert_keras_to_onnx(
     keras_model: Input[Model],
     onnx_model: Output[Model],
