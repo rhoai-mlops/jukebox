@@ -24,6 +24,7 @@ def train_model(
     """
 
     def save_pip_freeze(filename="frozen_requirements.txt"):
+        import subprocess
         with open(filename, "w") as f:
             subprocess.run(["pip", "freeze"], stdout=f, text=True)
 
