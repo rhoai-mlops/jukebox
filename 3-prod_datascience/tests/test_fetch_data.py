@@ -2,6 +2,9 @@ from kfp import local
 from kfp import dsl
 import pandas as pd
 from fetch_data import fetch_data
+import pytest
+import shutil
+import os
 
 
 def test_fetch_data():
@@ -17,6 +20,12 @@ def test_fetch_data():
            'instrumentalness', 'liveness', 'valence', 'tempo', 'time_signature']
     
     assert output_dataset.columns.tolist() == expected_columns
+
+@pytest.fixture(autouse=True)
+def cleanup():
+    yield
+    if os.path.exists("local_outputs"):
+        shutil.rmtree("local_outputs")
 
 if __name__ == "__main__":
     test_fetch_data()
