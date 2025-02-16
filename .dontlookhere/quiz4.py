@@ -32,7 +32,7 @@ def quiz_drift():
 
 def quiz_shap():
     options = ["It helps models remix their predictions into a top-chart hit", "It provides transparency into how features contribute to individual predictions", "It teaches models to sing in harmony with the data"]
-    correct_answer_idx = 2
+    correct_answer_idx = 1
     description = "Why is SHAP particularly useful in machine learning?"
     correct_answer_message = "Correct choice!🍰"
     incorrect_answer_message = "Incorrect choice. Please try again."

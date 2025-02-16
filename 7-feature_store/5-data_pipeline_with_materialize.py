@@ -14,41 +14,81 @@ DATASET = ""
 CLUSTER_DOMAIN = ""
 
 @component(packages_to_install=["pyarrow", "pandas"])
-def extract_data(
+def extract_parquet_from_url(
     dataset: str,
     data: Output[Dataset],
 ):
     import pandas as pd
 
-    song_properties = pd.read_parquet(dataset)
-    data.path += ".parquet"
-    song_properties.to_parquet(data.path, index=False)
+    parquet_data = pd.read_parquet(dataset)
 
-@component(packages_to_install=["pandas", "pyarrow"])
-def transform_data(
+    data.path += ".parquet"
+    parquet_data.to_parquet(data.path, index=False)
+
+@component(base_image='python:3.9', packages_to_install=["pyarrow==18.0.0", "pandas==2.2.3"])
+def extract_parquet_from_s3(
+    data: Output[Dataset],
+):
+    import pandas as pd
+    import pyarrow.fs
+    import os
+
+    fs = pyarrow.fs.S3FileSystem(
+            endpoint_override=os.environ.get('AWS_S3_ENDPOINT'),
+            access_key=os.environ.get('AWS_ACCESS_KEY_ID'),
+            secret_key=os.environ.get('AWS_SECRET_ACCESS_KEY')
+        )
+
+    with fs.open_input_file('data/song_properties.parquet') as file:
+        parquet_data = pd.read_parquet(file)
+
+    data.path += ".parquet"
+    parquet_data.to_parquet(data.path, index=False)
+
+@component(packages_to_install=["pyarrow", "pandas"])
+def add_date(
     input_data: Input[Dataset],
     output_data: Output[Dataset],
 ):
     import pandas as pd
-    
+    from datetime import datetime
+
     df = pd.read_parquet(input_data.path)
     df.columns = map(str.lower, df.columns)
-    
+    df["snapshot_date"] = datetime.now()
+
+    print(df)
+
     output_data.path += ".parquet"
     df.to_parquet(output_data.path, index=False)
 
+@component(packages_to_install=["pyarrow", "pandas"])
+def concat_datasets(
+    input_data_1: Input[Dataset],
+    input_data_2: Input[Dataset],
+    output_data: Output[Dataset],
+):
+    import pandas as pd
+
+    df1 = pd.read_parquet(input_data_1.path)
+    df2 = pd.read_parquet(input_data_2.path)
+
+    joined_df = pd.concat([df1, df2], ignore_index=True)
+    joined_df = joined_df.drop_duplicates(subset=["spotify_id"], keep="last")
+
+    output_data.path += ".parquet"
+    joined_df.to_parquet(output_data.path, index=False)
+
 @component(packages_to_install=["boto3", "pandas", "botocore"])
-def load_data(
+def push_to_s3(
     data: Input[Dataset]
 ):
     import os
     import boto3
-    import botocore
 
     aws_access_key_id = os.environ.get('AWS_ACCESS_KEY_ID')
     aws_secret_access_key = os.environ.get('AWS_SECRET_ACCESS_KEY')
     endpoint_url = os.environ.get('AWS_S3_ENDPOINT')
-    region_name = os.environ.get('AWS_DEFAULT_REGION')
     bucket_name = os.environ.get('AWS_S3_BUCKET')
 
 
@@ -57,8 +97,9 @@ def load_data(
         aws_secret_access_key=aws_secret_access_key,
         endpoint_url=endpoint_url,
     )
-    
+
     s3_client.upload_file(data.path, bucket_name, "song_properties.parquet")
+
 
 @component(base_image='python:3.9', packages_to_install=["feast==0.40.0", "psycopg2>=2.9", "dask-expr==1.1.10", "s3fs==2024.6.1", "psycopg_pool==3.2.3", "psycopg==3.2.3", "pandas", "numpy"])
 def materialize_changes(
@@ -67,7 +108,7 @@ def materialize_changes(
     import pandas as pd
     import numpy as np
     from datetime import datetime
-    
+
     fs_config_json = {
         'project': 'music',
         'provider': 'local',
@@ -100,7 +141,6 @@ def materialize_changes(
 
 
 @component(packages_to_install=["dvc[s3]==3.1.0"])
-# @component(packages_to_install=["dvc[s3]"])
 def setup_dvc_repository_with_env_credentials(
     repo_url: str,
     dvc_data_url: str,
@@ -120,9 +160,9 @@ def setup_dvc_repository_with_env_credentials(
     current_path = os.environ.get("PATH", "")
     new_path = f"{current_path}:/.local/bin"
     os.environ["PATH"] = new_path
-    
+
     print("Updated PATH:", os.environ["PATH"])
-    
+
     def run_command(command, cwd=None, env=None):
         result = subprocess.run(command, shell=True, cwd=cwd, text=True, capture_output=True, env=env)
         if result.returncode != 0:
@@ -200,12 +240,33 @@ def setup_dvc_repository_with_env_credentials(
   name='ETL Pipeline',
   description='Moves and transforms data from transactions data storage (postgresql) to S3.'
 )
-def etl_pipeline(dataset_url: str, repo_url: str):
-    extract_task = extract_data(dataset=dataset_url)
+def etl_pipeline(url_dataset: str, repo_url: str):
+    # Extract our current data
+    extract_s3_data_task = extract_parquet_from_s3()
+    kubernetes.use_secret_as_env(
+        extract_s3_data_task,
+        secret_name='aws-connection-data',
+        secret_key_to_env={
+            'AWS_ACCESS_KEY_ID': 'AWS_ACCESS_KEY_ID',
+            'AWS_SECRET_ACCESS_KEY': 'AWS_SECRET_ACCESS_KEY',
+            'AWS_S3_ENDPOINT': 'AWS_S3_ENDPOINT',
+            'AWS_DEFAULT_REGION': 'AWS_DEFAULT_REGION',
+            'AWS_S3_BUCKET': 'AWS_S3_BUCKET',
+        },
+    )
 
-    transform_task = transform_data(input_data=extract_task.outputs["data"])
+    # Extract the new data we want to add
+    extract_url_data_task = extract_parquet_from_url(dataset=url_dataset)
 
-    load_task = load_data(data=transform_task.outputs["output_data"])
+    # Add the current time to our data
+    add_date_task = add_date(input_data=extract_url_data_task.outputs["data"])
+
+    concat_task = concat_datasets(
+        input_data_1=extract_s3_data_task.outputs["data"],
+        input_data_2=add_date_task.outputs["output_data"]
+    )
+
+    load_task = push_to_s3(data=concat_task.outputs["output_data"])
     kubernetes.use_secret_as_env(
         load_task,
         secret_name='aws-connection-data',
@@ -233,9 +294,9 @@ def etl_pipeline(dataset_url: str, repo_url: str):
     materialize_task.after(load_task)
 
     setup_dvc_task = setup_dvc_repository_with_env_credentials(
-    repo_url=repo_url,
-    dvc_data_url="s3://data-cache",
-    email="mlops@wizard.com",
+        repo_url=repo_url,
+        dvc_data_url="s3://data-cache",
+        email="mlops@wizard.com",
     )
     kubernetes.use_secret_as_env(
         setup_dvc_task,
@@ -257,6 +318,17 @@ def etl_pipeline(dataset_url: str, repo_url: str):
         },
     )
     setup_dvc_task.after(materialize_task)
+    # setup_dvc_task.set_caching_options(False)
+    for task in [
+        extract_s3_data_task,
+        extract_url_data_task,
+        add_date_task,
+        concat_task,
+        load_task,
+        materialize_task,
+        setup_dvc_task
+    ]:
+        task.set_caching_options(enable_caching=False)
 
 def main():
     COMPILE=True
@@ -267,7 +339,7 @@ def main():
             "dataset_url": f"https://github.com/rhoai-mlops/jukebox/raw/refs/heads/main/99-data_prep/{DATASET}",
             "repo_url": f"https://gitea-gitea.{CLUSTER_DOMAIN}/{USER}/jukebox.git",
         }
-        
+
         namespace_file_path =\
             '/var/run/secrets/kubernetes.io/serviceaccount/namespace'
         with open(namespace_file_path, 'r') as namespace_file:
