@@ -1,9 +1,17 @@
-# Jukebox 🎶
+# Jukebox 🎶  
 
-This repo contains the scenario notebooks and pipelines. Content is arranged as follows:
+Welcome to **Jukebox**, a collection of scenario notebooks and pipelines designed to guide you through the AI/ML lifecycle—from data exploration to production-ready deployments.  
 
-- **1-data_exploration** Used by students to explore and process the dataset, and to setup the feature store.
-- **2-dev_datascience** Used by students to build a simple model to explore inference on the dataset.
-- **3-prod_datascience** Used by students to build production ready processes and workflows for continuous training, validation, and inference.
-- **99-data_prep** Used for pre-preparation of the raw data. Not used in delivery of the lab but can be used by instructor prior to running the lab to refresh the dataset.
+## Repository Structure  
 
+The content is organized into the following directories:  
+
+- **1-data_exploration**: Explore and preprocess the dataset, and set up the feature store.  
+- **2-dev_datascience**: Develop a simple model to test inference on the dataset.  
+- **3-prod_datascience**: Build production-ready pipelines for continuous training, validation, and inference.  
+- **4-metrics**: Set up TrustyAI to monitor data drift and model bias.  
+- **5-data-versioning**: Use DVC to version the dataset for reproducible training.  
+- **6-advanced_deployments**: Experiment with autoscaling and advanced deployment strategies.  
+- **7-feature_store**: Configure Feast (Feature Store) and use it for real-time inference.  
+- **8-securing_ai**: Explore security tools for AI/ML workloads.  
+- **99-data_prep**: Prepares raw data before the lab. This is not used during the lab but can be utilized by the instructor to refresh the dataset beforehand.  
