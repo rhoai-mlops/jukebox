@@ -106,12 +106,13 @@ def push_to_model_registry(
     registered_model_name = model_object_prefix
     metadata = {
             "accuracy": str(metrics.metadata['Accuracy']),
-            "dataset_metadata": str(dataset.metadata),
-        }
-    s3_path_updated_format = utils.s3_uri_from(model_artifact_s3_path,
-                                               bucket=s3_bucket_name,
-                                               endpoint=s3_endpoint_url,
-                                               region=s3_region)
+        } | {key : str(value) for key, value in dataset.metadata.items() if key not in ["display_name", "store_session_info"]} 
+
+    if not prod_flag:
+        s3_path_updated_format = utils.s3_uri_from(model_artifact_s3_path,
+                                                   bucket=s3_bucket_name,
+                                                   endpoint=s3_endpoint_url,
+                                                   region=s3_region)
 
     registry.register_model(
         registered_model_name,
