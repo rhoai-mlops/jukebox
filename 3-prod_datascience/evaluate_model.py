@@ -50,7 +50,7 @@ def evaluate_keras_model_performance(
     
     # Get the previous models properties from the Model Registry
     if prod_flag:
-        namespace = environ.get("NAMESPACE").split("-")[0]+"prod"
+        namespace = environ.get("NAMESPACE").split("-")[0]+"-prod"
     else:
         namespace = environ.get("NAMESPACE").split("-")[0]
 

@@ -100,7 +100,7 @@ def push_to_model_registry(
         namespace = namespace_file.read()
 
     if prod_flag:
-        namespace = namespace.split("-")[0]+"prod"
+        namespace = namespace.split("-")[0]+"-prod"
     else:
         namespace = namespace.split("-")[0]
     
