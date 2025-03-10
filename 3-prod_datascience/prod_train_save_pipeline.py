@@ -103,6 +103,7 @@ def training_pipeline(hyperparameters: dict, model_name: str, version: str, clus
             'AWS_ACCESS_KEY_ID': 'AWS_ACCESS_KEY_ID',
             'AWS_SECRET_ACCESS_KEY': 'AWS_SECRET_ACCESS_KEY',
             'AWS_S3_BUCKET': 'AWS_S3_BUCKET',
+            'AWS_DEFAULT_REGION': 'AWS_DEFAULT_REGION',
         },
     )
     # Set PVC to store model artifacts
@@ -120,7 +121,7 @@ if __name__ == '__main__':
             "epochs": 2
         },
         "model_name": "jukebox",
-        "version": "0.0.2",
+        "version": "0.0.1",
         "cluster_domain": "<CLUSTER_DOMAIN>", # 👈 add your cluster domain here
         "model_storage_pvc": "jukebox-model-pvc",
         "prod_flag": False
