@@ -65,6 +65,7 @@ def training_pipeline(hyperparameters: dict, model_name: str, version: str, clus
         model_name = model_name,
         cluster_domain = cluster_domain,
         version = version, # Add version to force a rerun of this step every new version
+        prod_flag = prod_flag,
     )
     kubernetes.use_field_path_as_env(
         model_evaluation_task,
