@@ -30,7 +30,7 @@ def fetch_artifacts_from_registry(artifacts, pipeline_namespace, model_registry_
 
     save_paths = {}
     for artifact in artifacts:
-        download_file_from_s3(f"http://minio-service.{pipeline_namespace}.svc.cluster.local:9000", bucket_name, f"training-pipeline/{pipeline_run_id}/{artifact}", artifact.split("/")[-1])
+        download_file_from_s3(f"http://minio-service.{pipeline_namespace}.svc.cluster.local:9000", bucket_name, f"kfp-training-pipeline/{pipeline_run_id}/{artifact}", artifact.split("/")[-1])
         save_paths[artifact] = os.path.abspath(artifact.split("/")[-1])
 
     return save_paths
