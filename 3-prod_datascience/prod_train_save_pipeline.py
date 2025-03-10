@@ -27,7 +27,7 @@ data_connection_secret_name = 'aws-connection-models'
 
 # Create pipeline
 @dsl.pipeline(
-  name='training-pipeline',
+  name='kfp-training-pipeline',
   description='We train an amazing model 🚂'
 )
 def training_pipeline(hyperparameters: dict, model_name: str, version: str, cluster_domain: str, model_storage_pvc: str, prod_flag: bool):
@@ -65,6 +65,7 @@ def training_pipeline(hyperparameters: dict, model_name: str, version: str, clus
         model_name = model_name,
         cluster_domain = cluster_domain,
         version = version, # Add version to force a rerun of this step every new version
+        prod_flag = prod_flag,
     )
     kubernetes.use_field_path_as_env(
         model_evaluation_task,
@@ -102,6 +103,7 @@ def training_pipeline(hyperparameters: dict, model_name: str, version: str, clus
             'AWS_ACCESS_KEY_ID': 'AWS_ACCESS_KEY_ID',
             'AWS_SECRET_ACCESS_KEY': 'AWS_SECRET_ACCESS_KEY',
             'AWS_S3_BUCKET': 'AWS_S3_BUCKET',
+            'AWS_DEFAULT_REGION': 'AWS_DEFAULT_REGION',
         },
     )
     # Set PVC to store model artifacts
@@ -119,7 +121,7 @@ if __name__ == '__main__':
             "epochs": 2
         },
         "model_name": "jukebox",
-        "version": "0.0.2",
+        "version": "0.0.1",
         "cluster_domain": "<CLUSTER_DOMAIN>", # 👈 add your cluster domain here
         "model_storage_pvc": "jukebox-model-pvc",
         "prod_flag": False
@@ -150,6 +152,6 @@ if __name__ == '__main__':
     client.create_run_from_pipeline_func(
         training_pipeline,
         arguments=metadata,
-        experiment_name="training",
+        experiment_name="kfp-training-pipeline",
         enable_caching=True
     )
