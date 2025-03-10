@@ -124,27 +124,3 @@ def push_to_model_registry(
         metadata=metadata
     )
     print("Model registered successfully")
-
-    # def _register_model(author_name , server_address, model_object_prefix, version):
-    #     registry = ModelRegistry(server_address=server_address, port=443, author=author_name, is_secure=False)
-    #     registered_model_name = model_object_prefix
-    #     version_name = version
-    #     metadata = {
-    #         "accuracy": str(metrics.metadata['Accuracy']),
-    #         "dataset_metadata": str(dataset.metadata),
-    #     }
-
-    #     rm = registry.register_model(
-    #         registered_model_name,
-    #        "to-be-updated" if prod_flag else f"s3://{s3_endpoint_url.split('https://')[-1]}{model_artifact_s3_path}",
-    #         model_format_name="onnx",
-    #         model_format_version="1",
-    #         version=version_name,
-    #         description=f"{registered_model_name} is a dense neural network. Built with Keras and it has 4 layers. It's been trained on a music dataset consisting of 14K songs and 1.1M data points where the songs are popular. To use send an array of 13 normalized values representing the song features to the input layer is called `input`. The output layer is called `outputs` and will return 72 values, each representing the probability that the song will be popular in that country.",
-    #         metadata=metadata
-    #     )
-    #     print("Model registered successfully")
-
-    # # Register the model
-    # server_address = f"https://{namespace}-registry-rest.{cluster_domain}"
-    # _register_model(namespace, server_address, model_object_prefix, version)
