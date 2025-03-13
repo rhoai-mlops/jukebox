@@ -96,6 +96,7 @@ def fetch_data_from_dvc(
 
 @component(base_image='python:3.9', packages_to_install=["feast==0.40.0", "psycopg2>=2.9", "dask-expr==1.1.10", "s3fs==2024.6.1", "psycopg_pool==3.2.3", "psycopg==3.2.3", "pandas==2.2.3", "numpy==1.26.4"])
 def fetch_data_from_feast(
+    version: str,
     dataset: Output[Dataset]
 ):
     """
