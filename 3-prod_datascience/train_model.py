@@ -38,6 +38,12 @@ def train_model(
     import pickle
     import pandas as pd
     import sklearn
+    import tensorflow as tf
+
+    SEED = 42
+    tf.random.set_seed(SEED)
+    tf.keras.utils.set_random_seed(SEED)
+    tf.config.experimental.enable_op_determinism()
     
     with open(train_data.path, 'rb') as pickle_file:
         X_train, y_train = pd.read_pickle(pickle_file)
@@ -60,17 +66,32 @@ def train_model(
     model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy', 'Precision', 'Recall'])
     model.summary()
 
-    train_inputs = {name: X_train[[name]].to_numpy() for name in X_train.columns}
-    val_inputs = {name: X_val[[name]].to_numpy() for name in X_val.columns}
-    
+    feature_names = list(X_train.columns)
+    train_features = [X_train[[name]].to_numpy() for name in feature_names]
+    val_features = [X_val[[name]].to_numpy() for name in feature_names]
+
+    train_feature_dataset = tf.data.Dataset.zip(tuple(
+        tf.data.Dataset.from_tensor_slices(f) for f in train_features
+    ))
+    val_feature_dataset = tf.data.Dataset.zip(tuple(
+        tf.data.Dataset.from_tensor_slices(f) for f in val_features
+    ))
+
+    train_dataset = tf.data.Dataset.zip((train_feature_dataset, tf.data.Dataset.from_tensor_slices(y_train)))
+    val_dataset = tf.data.Dataset.zip((val_feature_dataset, tf.data.Dataset.from_tensor_slices(y_val)))
+
+    train_dataset = train_dataset.shuffle(buffer_size=len(y_train), seed=42, reshuffle_each_iteration=False)
+    train_dataset = train_dataset.batch(32)
+    val_dataset = val_dataset.batch(32)
+
     epochs = hyperparameters["epochs"]
     history = model.fit(
-        train_inputs,
-        y_train,
-        epochs=epochs,
-        validation_data=(val_inputs, y_val),
+        train_dataset,
+        validation_data=val_dataset, 
+        epochs=epochs, 
         verbose=True
     )
+
     print("Training of model is complete")
     
     trained_model.path += ".keras"
