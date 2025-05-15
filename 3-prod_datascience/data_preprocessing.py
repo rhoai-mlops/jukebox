@@ -63,19 +63,19 @@ def preprocess_data(
     scaled_x_val = pd.DataFrame(scaler_.transform(X_val), index=X_val.index, columns=X_val.columns)
     scaled_x_test = pd.DataFrame(scaler_.transform(X_test), index=X_test.index, columns=X_test.columns).astype(np.float32)
     
-    train_data.path += ".pkl"
-    val_data.path += ".pkl"
-    test_data.path += ".pkl"
-    scaler.path += ".pkl"
-    label_encoder.path += ".pkl"
-    
-    with open(train_data.path, "wb") as handle:
+    train_data_path = train_data.path + ".pkl"
+    val_data_path = val_data.path + ".pkl"
+    test_data_path = test_data.path + ".pkl"
+    scaler_path = scaler.path + ".pkl"
+    label_encoder_path = label_encoder.path + ".pkl"
+
+    with open(train_data_path, "wb") as handle:
         pickle.dump((scaled_x_train, y_train), handle)
-    with open(val_data.path, "wb") as handle:
+    with open(val_data_path, "wb") as handle:
         pickle.dump((scaled_x_val, y_val), handle)
-    with open(test_data.path, "wb") as handle:
+    with open(test_data_path, "wb") as handle:
         pickle.dump((scaled_x_test, y_test), handle)
-    with open(scaler.path, "wb") as handle:
+    with open(scaler_path, "wb") as handle:
         pickle.dump(scaler_, handle)
-    with open(label_encoder.path, "wb") as handle:
+    with open(label_encoder_path, "wb") as handle:
         pickle.dump(label_encoder_, handle)
