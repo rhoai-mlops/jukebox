@@ -6,16 +6,16 @@ from kfp.dsl import (
     Output,
     Dataset,
     Metrics,
-    Model,
+    Artifact,
     ClassificationMetrics,
 )
 
 @component(base_image="tensorflow/tensorflow:2.15.0", packages_to_install=["tf2onnx==1.16.1", "onnx==1.17.0", "pandas==2.2.3", "scikit-learn==1.6.1", "model-registry==0.2.10"])
 def evaluate_keras_model_performance(
-    model: Input[Model],
+    model: Input[Artifact],
     test_data: Input[Dataset],
-    scaler: Input[Model],
-    label_encoder: Input[Model],
+    scaler: Input[Artifact],
+    label_encoder: Input[Artifact],
     model_name: str,
     cluster_domain: str,
     version: str,
@@ -89,10 +89,10 @@ def evaluate_keras_model_performance(
         
 @component(base_image="tensorflow/tensorflow:2.15.0", packages_to_install=["onnxruntime==1.20.1", "pandas==2.2.3", "scikit-learn==1.6.1"])
 def validate_onnx_model(
-    onnx_model: Input[Model],
-    keras_model: Input[Model],
+    onnx_model: Input[Artifact],
+    keras_model: Input[Artifact],
     test_data: Input[Dataset],
-    scaler: Input[Model],
+    scaler: Input[Artifact],
 ):
     import onnxruntime as rt
     import pandas as pd

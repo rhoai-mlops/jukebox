@@ -6,7 +6,7 @@ from kfp.dsl import (
     Output,
     Dataset,
     Metrics,
-    Model,
+    Artifact,
 )
 from typing import NamedTuple
 
@@ -16,8 +16,8 @@ def preprocess_data(
     train_data: Output[Dataset],
     val_data: Output[Dataset],
     test_data: Output[Dataset],
-    scaler: Output[Model],
-    label_encoder: Output[Model],
+    scaler: Output[Artifact],
+    label_encoder: Output[Artifact],
 ):
     """
     Takes the dataset and preprocesses it to better train on the fraud detection model.
@@ -26,7 +26,7 @@ def preprocess_data(
     2. Creating a scaler which scales down the training dataset. This scaler is saved as an artifact.
     3. Calculates the class weights, which will later be used during the training.
     """
-    
+
     from sklearn.model_selection import train_test_split
     from sklearn.preprocessing import StandardScaler, MinMaxScaler, OneHotEncoder, LabelEncoder
     from sklearn.utils import class_weight
@@ -35,6 +35,31 @@ def preprocess_data(
     import numpy as np
     from typing import NamedTuple
     import tensorflow as tf
+
+    # ########################## Ugly hack ##########################
+    # def transfer_artifact_class(original, new):
+    #     new.metadata = original.metadata
+    #     new.uri = original.uri
+    #     new.name = original.name
+    #     new._path = original.path
+    #     return new
+
+    # class WriteModel(Model):
+    #     def __init__(self, *args, **kwargs):
+    #         super().__init__(self, *args, **kwargs)
+        
+    #     @property
+    #     def path(self) -> str:
+    #         return self._path
+        
+    #     @path.setter
+    #     def path(self, value: str):
+    #         self._path = value
+
+
+    # scaler = transfer_artifact_class(scaler, WriteModel())
+    # label_encoder = transfer_artifact_class(label_encoder, WriteModel())
+    # #################################################################
     
     df = pd.read_csv(in_data.path)
     df = df.dropna()
@@ -63,19 +88,22 @@ def preprocess_data(
     scaled_x_val = pd.DataFrame(scaler_.transform(X_val), index=X_val.index, columns=X_val.columns)
     scaled_x_test = pd.DataFrame(scaler_.transform(X_test), index=X_test.index, columns=X_test.columns).astype(np.float32)
     
-    train_data_path = train_data.path + ".pkl"
-    val_data_path = val_data.path + ".pkl"
-    test_data_path = test_data.path + ".pkl"
-    scaler_path = scaler.path + ".pkl"
-    label_encoder_path = label_encoder.path + ".pkl"
+    train_data.path += ".pkl"
+    val_data.path += ".pkl"
+    test_data.path += ".pkl"
+    scaler.path += ".pkl"
+    label_encoder.path += ".pkl"
 
-    with open(train_data_path, "wb") as handle:
+    print("Scaler path:", scaler.path)
+    print("Label encoder path:", label_encoder.path)
+
+    with open(train_data.path, "wb") as handle:
         pickle.dump((scaled_x_train, y_train), handle)
-    with open(val_data_path, "wb") as handle:
+    with open(val_data.path, "wb") as handle:
         pickle.dump((scaled_x_val, y_val), handle)
-    with open(test_data_path, "wb") as handle:
+    with open(test_data.path, "wb") as handle:
         pickle.dump((scaled_x_test, y_test), handle)
-    with open(scaler_path, "wb") as handle:
+    with open(scaler.path, "wb") as handle:
         pickle.dump(scaler_, handle)
-    with open(label_encoder_path, "wb") as handle:
+    with open(label_encoder.path, "wb") as handle:
         pickle.dump(label_encoder_, handle)

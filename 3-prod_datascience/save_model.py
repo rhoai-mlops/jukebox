@@ -6,7 +6,6 @@ from kfp.dsl import (
     Output,
     Dataset,
     Metrics,
-    Model,
     Artifact,
 )
 
@@ -17,11 +16,11 @@ def push_to_model_registry(
     version: str,
     cluster_domain: str,
     prod_flag: bool,
-    keras_model: Input[Model],
-    model: Input[Model],
+    keras_model: Input[Artifact],
+    model: Input[Artifact],
     metrics: Input[Metrics],
-    scaler: Input[Model],
-    label_encoder: Input[Model],
+    scaler: Input[Artifact],
+    label_encoder: Input[Artifact],
     dataset: Input[Dataset],
     training_dependencies: Input[Artifact],
 ):
