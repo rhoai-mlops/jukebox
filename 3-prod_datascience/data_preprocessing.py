@@ -69,9 +69,6 @@ def preprocess_data(
     scaler.path += ".pkl"
     label_encoder.path += ".pkl"
 
-    print("Scaler path:", scaler.path)
-    print("Label encoder path:", label_encoder.path)
-
     with open(train_data.path, "wb") as handle:
         pickle.dump((scaled_x_train, y_train), handle)
     with open(val_data.path, "wb") as handle:
