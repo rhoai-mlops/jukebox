@@ -35,31 +35,6 @@ def preprocess_data(
     import numpy as np
     from typing import NamedTuple
     import tensorflow as tf
-
-    # ########################## Ugly hack ##########################
-    # def transfer_artifact_class(original, new):
-    #     new.metadata = original.metadata
-    #     new.uri = original.uri
-    #     new.name = original.name
-    #     new._path = original.path
-    #     return new
-
-    # class WriteModel(Model):
-    #     def __init__(self, *args, **kwargs):
-    #         super().__init__(self, *args, **kwargs)
-        
-    #     @property
-    #     def path(self) -> str:
-    #         return self._path
-        
-    #     @path.setter
-    #     def path(self, value: str):
-    #         self._path = value
-
-
-    # scaler = transfer_artifact_class(scaler, WriteModel())
-    # label_encoder = transfer_artifact_class(label_encoder, WriteModel())
-    # #################################################################
     
     df = pd.read_csv(in_data.path)
     df = df.dropna()
