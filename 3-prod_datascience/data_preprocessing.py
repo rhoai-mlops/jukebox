@@ -6,7 +6,7 @@ from kfp.dsl import (
     Output,
     Dataset,
     Metrics,
-    Model,
+    Artifact,
 )
 from typing import NamedTuple
 
@@ -16,8 +16,8 @@ def preprocess_data(
     train_data: Output[Dataset],
     val_data: Output[Dataset],
     test_data: Output[Dataset],
-    scaler: Output[Model],
-    label_encoder: Output[Model],
+    scaler: Output[Artifact],
+    label_encoder: Output[Artifact],
 ):
     """
     Takes the dataset and preprocesses it to better train on the fraud detection model.
@@ -26,7 +26,7 @@ def preprocess_data(
     2. Creating a scaler which scales down the training dataset. This scaler is saved as an artifact.
     3. Calculates the class weights, which will later be used during the training.
     """
-    
+
     from sklearn.model_selection import train_test_split
     from sklearn.preprocessing import StandardScaler, MinMaxScaler, OneHotEncoder, LabelEncoder
     from sklearn.utils import class_weight
@@ -68,7 +68,7 @@ def preprocess_data(
     test_data.path += ".pkl"
     scaler.path += ".pkl"
     label_encoder.path += ".pkl"
-    
+
     with open(train_data.path, "wb") as handle:
         pickle.dump((scaled_x_train, y_train), handle)
     with open(val_data.path, "wb") as handle:

@@ -14,9 +14,9 @@ from kfp.dsl import (
 def train_model(
     train_data: Input[Dataset],
     val_data: Input[Dataset],
-    scaler: Input[Model],
+    scaler: Input[Artifact],
     hyperparameters: dict,
-    trained_model: Output[Model],
+    trained_model: Output[Artifact],
     training_dependencies: Output[Artifact],
 ):
     """
@@ -100,8 +100,8 @@ def train_model(
     
 @component(base_image="tensorflow/tensorflow:2.15.0", packages_to_install=["tf2onnx==1.16.1", "onnx==1.17.0", "pandas==2.2.3", "scikit-learn==1.6.1"])
 def convert_keras_to_onnx(
-    keras_model: Input[Model],
-    onnx_model: Output[Model],
+    keras_model: Input[Artifact],
+    onnx_model: Output[Artifact],
 ):
     import tf2onnx, onnx
     import keras
