@@ -45,8 +45,7 @@ def fetch_artifacts_from_registry(token, artifacts, pipeline_namespace,
                     f"kfp-training-pipeline/{pipeline_run_id}")
 
     # Get the S3 client
-    # s3_endpoint = f"http://minio-service.{pipeline_namespace}.svc.cluster.local:9000"
-    s3_endpoint = f"https://minio-api-{pipeline_namespace}.apps.ocp.the511.local"
+    s3_endpoint = f"http://minio-service.{pipeline_namespace}.svc.cluster.local:9000"
     s3_client = get_s3_client(s3_endpoint)
 
     # This gives us the timestamp of the latest object from
