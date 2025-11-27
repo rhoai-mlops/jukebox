@@ -46,40 +46,39 @@ def find_artifact_path(s3_client, bucket_name, pipeline_run_id, artifact):
         print(f"Error listing S3 objects: {e}")
         return None, None
 
-    # Look for folders under the component directory
-    component_prefix = f"kfp-training-pipeline/{pipeline_run_id}/{component}/"
-    try:
-        response = s3_client.list_objects_v2(
-            Bucket=bucket_name,
-            Prefix=component_prefix,
-            Delimiter='/'
-        )
+    # Look for folders and artifact under each pipeline run ID for the component
+    # This solution assumes that caching is enabled and artifacts are stored under a pipeline run ID folder but not always the last one
+    for pipeline_run_id in response['CommonPrefixes']:
+        component_prefix = f"kfp-training-pipeline/{pipeline_run_id.get('Prefix').split('/')[-2]}/{component}/"
+        print(f"INFO: Looking for the artifact {artifact_filename} in the folder {component_prefix}")
+        try:
+            response_internal = s3_client.list_objects_v2(
+                Bucket=bucket_name,
+                Prefix=component_prefix,
+                Delimiter='/'
+            )
 
-        if 'CommonPrefixes' in response:
-            # Find the folder that contains our artifact
-            for prefix_info in response['CommonPrefixes']:
-                random_id_folder = prefix_info['Prefix']
+            if 'CommonPrefixes' in response_internal:
+                # Find the folder that contains our artifact
+                for prefix_info in response_internal['CommonPrefixes']:
+                    random_id_folder = prefix_info['Prefix']
 
-                # Check if this folder contains our artifact file
-                file_response = s3_client.list_objects_v2(
-                    Bucket=bucket_name,
-                    Prefix=random_id_folder
-                )
+                    # Check if this folder contains our artifact file
+                    file_response = s3_client.list_objects_v2(
+                        Bucket=bucket_name,
+                        Prefix=random_id_folder
+                    )
 
-                if 'Contents' in file_response:
-                    for obj in file_response['Contents']:
-                        if obj['Key'].endswith(artifact_filename):
-                            return random_id_folder, obj['Key']
-
-            print(f"Artifact {artifact_filename} not found in any subfolder under {component_prefix}")
+                    if 'Contents' in file_response:
+                        for obj in file_response['Contents']:
+                            if obj['Key'].endswith(artifact_filename):
+                                return random_id_folder, obj['Key']
+            else:
+                print(f"WARNING: No folders found under {component_prefix}")
+        except Exception as e:
+            print(f"Error listing S3 objects: {e}")
             return None, None
-        else:
-            print(f"No folders found under {component_prefix}")
-            return None, None
-    except Exception as e:
-        print(f"Error listing S3 objects: {e}")
-        return None, None
-
+    return None, None
 
 def download_file_from_s3(s3_endpoint, bucket_name, object_key, download_path):
     s3_client = get_s3_client(s3_endpoint)
