@@ -1,7 +1,11 @@
-from model_registry import ModelRegistry
 import os
-import boto3
 from os import environ
+
+import boto3
+import urllib3
+from model_registry import ModelRegistry
+
+urllib3.disable_warnings()
 
 
 def get_s3_client(s3_endpoint):
@@ -14,98 +18,98 @@ def get_s3_client(s3_endpoint):
         aws_access_key_id=s3_access_key,
         aws_secret_access_key=s3_secret_key,
         endpoint_url=s3_endpoint,
+        verify=False,
     )
 
 
-def find_artifact_path(s3_client, bucket_name, pipeline_run_id, artifact):
-    # Split artifact path to get component name
-    component = artifact.split('/')[0]
-    artifact_filename = artifact.split('/')[-1]
-
-    # Look for folders under the kfp-training-pipeline directory
-    pipeline_prefix = "kfp-training-pipeline/"
-    try:
-        response = s3_client.list_objects_v2(
-            Bucket=bucket_name,
-            Prefix=pipeline_prefix,
-            Delimiter='/'
-        )
-        if 'CommonPrefixes' in response:
-            # Check pipeline_run_id existence or fallback to last found
-            found = False
-            for obj in response['CommonPrefixes']:
-                obj_id = obj.get('Prefix').split('/')[-2]
-                found |= obj_id == pipeline_run_id
-            if not found:
-                print(f"Warning: pipeline_run_id {pipeline_run_id} not found! Falling back to {obj_id}")
-                pipeline_run_id = obj_id
-        else:
-            print(f"Error: No folders found under {pipeline_prefix}")
-            return None, None
-    except Exception as e:
-        print(f"Error listing S3 objects: {e}")
-        return None, None
-
-    # Look for folders under the component directory
-    component_prefix = f"kfp-training-pipeline/{pipeline_run_id}/{component}/"
-    try:
-        response = s3_client.list_objects_v2(
-            Bucket=bucket_name,
-            Prefix=component_prefix,
-            Delimiter='/'
-        )
-
-        if 'CommonPrefixes' in response:
-            # Find the folder that contains our artifact
-            for prefix_info in response['CommonPrefixes']:
-                random_id_folder = prefix_info['Prefix']
-
-                # Check if this folder contains our artifact file
-                file_response = s3_client.list_objects_v2(
-                    Bucket=bucket_name,
-                    Prefix=random_id_folder
-                )
-
-                if 'Contents' in file_response:
-                    for obj in file_response['Contents']:
-                        if obj['Key'].endswith(artifact_filename):
-                            return random_id_folder, obj['Key']
-
-            print(f"Artifact {artifact_filename} not found in any subfolder under {component_prefix}")
-            return None, None
-        else:
-            print(f"No folders found under {component_prefix}")
-            return None, None
-    except Exception as e:
-        print(f"Error listing S3 objects: {e}")
-        return None, None
-
-
-def download_file_from_s3(s3_endpoint, bucket_name, object_key, download_path):
-    s3_client = get_s3_client(s3_endpoint)
-
-    try:
-        s3_client.download_file(bucket_name, object_key, download_path)
-        print(f"File downloaded successfully to {download_path}")
-    except Exception as e:
-        print(f"Error downloading file: {e}")
-
-
-def fetch_artifacts_from_registry(token, artifacts, pipeline_namespace, model_registry_url, model_name, model_version, author_name, bucket_name="pipeline"):
+def fetch_artifacts_from_registry(token, artifacts, pipeline_namespace,
+                                  model_registry_url, model_name, model_version,
+                                  author_name, bucket_name="pipeline",
+                                  debug=False):
     # Set up the model registry connection
-    registry = ModelRegistry(server_address=model_registry_url, port=443, user_token=token, author=author_name, is_secure=False)
-    version = registry.get_model_version(model_name, model_version)
-    pipeline_run_id = version.custom_properties['pipeline_run_id'] #NOTE: This assumes that caching is disabled as we download the artifacts from S3 assuming that they are placed in the pipeline version folder.
+    registry = ModelRegistry(server_address=model_registry_url, port=443,
+                             user_token=token, author=author_name, is_secure=False)
 
+    # Get model metadata
+    version = registry.get_model_version(model_name, model_version)
+
+    # See what pipeline run created this model
+    try:
+        pipeline_run_id = version.custom_properties['pipeline_run_id']
+    except Exception:
+        raise Exception(
+            f"Model version {model_version} has no 'pipeline_run_id' property."
+        )
+
+    if debug: print("**** reference object prefix is " +
+                    f"kfp-training-pipeline/{pipeline_run_id}")
+
+    # Get the S3 client
     s3_endpoint = f"http://minio-service.{pipeline_namespace}.svc.cluster.local:9000"
     s3_client = get_s3_client(s3_endpoint)
 
+    # This gives us the timestamp of the latest object from
+    # the reference pipeline run.
+    try:
+        refs = s3_client.list_objects_v2(
+            Bucket="pipeline",
+            Prefix=f"kfp-training-pipeline/{pipeline_run_id}",
+            )['Contents']
+    except Exception:
+        raise Exception("No artifacts found for " +
+                        f"kfp-training-pipeline/{pipeline_run_id} " +
+                        "- was it executed by an OpenShift pipeline?")
+
+    sorted(refs, key=lambda obj: obj['LastModified'])
+    ref_ts = refs[-1]['LastModified']
+
+    if debug: print(f"**** reference timestamp for artifacts is {ref_ts}")
+
+    # Fetch all objects from kfp-training-pipeline prefix and
+    # throw away anything newer than ref_ts
+    objs = [obj for obj in s3_client.list_objects_v2(
+                                Bucket="pipeline",
+                                Prefix="kfp-training-pipeline",
+                                MaxKeys=100000,
+                            )['Contents'] if obj['LastModified'] <= ref_ts]
+
+    if debug: print(f"**** got {len(objs)} objects of age >= {ref_ts}")
+
+    # Only retain the latest version of any object
+    # that matches the artifact name
+    latest_found = {}
+    for obj in objs:
+        pcomps = obj['Key'].split('/')
+        shortname = pcomps[-3] + '/' + pcomps[-1]
+
+        if shortname not in artifacts:
+            if debug: print(f"Skipping irrelevant {shortname}")
+            continue
+        if shortname not in latest_found.keys():
+            if debug: print(f"Adding first instance of {shortname}")
+            latest_found[shortname] = {
+                'key': obj['Key'],
+                'ts': obj['LastModified']
+            }
+            continue
+        if obj['LastModified'] < latest_found[shortname]['ts']:
+            if debug: print(f"Skipping {shortname} from " +
+                            f"{obj['LastModified']} - it is older than " +
+                            f"{latest_found[shortname]['ts']}")
+            continue
+
+        if debug: print(f"Replacing {shortname} from " +
+                        f"{latest_found[shortname]['ts']} " +
+                        f"with one from {obj['LastModified']}")
+        latest_found[shortname] = {
+            'key': obj['Key'],
+            'ts': obj['LastModified']
+        }
+
+    # Download artifacts and return their locations
     save_paths = {}
     for artifact in artifacts:
-        # Find the actual path with random ID
-        artifact_folder_path, artifact_file_key = find_artifact_path(s3_client, bucket_name, pipeline_run_id, artifact)
-
-        if artifact_folder_path and artifact_file_key:
+        if artifact in latest_found.keys():
             # Create local directory structure to match the artifact path
             local_path = artifact
             local_dir = os.path.dirname(local_path)
@@ -115,12 +119,16 @@ def fetch_artifacts_from_registry(token, artifacts, pipeline_namespace, model_re
                 os.makedirs(local_dir, exist_ok=True)
 
             try:
-                download_file_from_s3(s3_endpoint, bucket_name, artifact_file_key, local_path)
+                s3_client.download_file(bucket_name,
+                                        latest_found[artifact]['key'],
+                                        local_path)
                 save_paths[artifact] = os.path.abspath(local_path)
-                print(f"Successfully downloaded {artifact} to {local_path}")
+                print(f"Successfully downloaded {artifact} to {local_path} " +
+                      f"from {latest_found[artifact]['key']}")
             except Exception as e:
-                print(f"Error downloading {artifact}: {e}")
+                print(f"Error downloading {artifact} " +
+                      f"from {latest_found[artifact]['key']}: {e}")
         else:
-            print(f"Could not find artifact folder for {artifact}")
+            print(f"Could not find artifact in object store: {artifact}")
 
     return save_paths
