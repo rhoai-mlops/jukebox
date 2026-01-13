@@ -10,7 +10,7 @@ from kfp.dsl import (
     Artifact,
 )
 
-@component(base_image="tensorflow/tensorflow:2.15.0", packages_to_install=[ "pandas==2.2.3", "scikit-learn==1.6.1"])
+@component(base_image="tensorflow/tensorflow:2.15.0", packages_to_install=["numpy<2", "pandas==2.2.3", "scikit-learn==1.6.1"])
 def train_model(
     train_data: Input[Dataset],
     val_data: Input[Dataset],
@@ -98,7 +98,7 @@ def train_model(
     model.save(trained_model.path)
     
     
-@component(base_image="tensorflow/tensorflow:2.15.0", packages_to_install=["tf2onnx==1.16.1", "onnx==1.17.0", "pandas==2.2.3", "scikit-learn==1.6.1"])
+@component(base_image="tensorflow/tensorflow:2.15.0", packages_to_install=["numpy<2", "tf2onnx==1.16.1", "onnx==1.17.0", "pandas==2.2.3", "scikit-learn==1.6.1"])
 def convert_keras_to_onnx(
     keras_model: Input[Artifact],
     onnx_model: Output[Artifact],
