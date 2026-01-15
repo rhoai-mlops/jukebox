@@ -61,7 +61,7 @@ def load_data(
     s3_client.upload_file(data.path, bucket_name, "song_properties.parquet")
 
 
-@component(packages_to_install=["dvc[s3]==3.1.0"])
+@component(packages_to_install=["dvc[s3]==3.1.0", "pathspec<0.12.0"])
 # @component(packages_to_install=["dvc[s3]"])
 def setup_dvc_repository_with_env_credentials(
     repo_url: str,
