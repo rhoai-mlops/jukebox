@@ -140,7 +140,7 @@ def materialize_changes(
     fs.materialize_incremental(datetime.now())
 
 
-@component(packages_to_install=["dvc[s3]==3.1.0"])
+@component(packages_to_install=["dvc[s3]==3.1.0", "pathspec<0.12.0"])
 def setup_dvc_repository_with_env_credentials(
     repo_url: str,
     dvc_data_url: str,
