@@ -14,8 +14,9 @@ from kfp.dsl import (
 def push_to_model_registry(
     model_name: str,
     version: str,
-    cluster_domain: str,
     prod_flag: bool,
+    model_registry_server_address: str,
+    model_registry_port: int,
     keras_model: Input[Artifact],
     model: Input[Artifact],
     metrics: Input[Metrics],
@@ -82,24 +83,14 @@ def push_to_model_registry(
     environ["KF_PIPELINES_SA_TOKEN_PATH"] = "/var/run/secrets/kubernetes.io/serviceaccount/token"
 
     ############ Register to Model Registry ############
-    namespace_file_path =\
-        '/var/run/secrets/kubernetes.io/serviceaccount/namespace'
-    with open(namespace_file_path, 'r') as namespace_file:
-        namespace = namespace_file.read()
-
-    if prod_flag:
-        namespace = namespace.split("-")[0]+"-prod"
-    else:
-        namespace = namespace.split("-")[0]
 
     model_object_prefix = model_name if model_name else "model"
     version = version if version else datetime.now().strftime('%y%m%d%H%M')
-    server_address = f"https://{namespace}-registry-rest.{cluster_domain}"
 
     registry = ModelRegistry(
-        server_address=server_address,
-        port=443,
-        author=namespace,
+        server_address=model_registry_server_address,
+        port=model_registry_port,
+        author="someone",
         is_secure=False
     )
     registered_model_name = model_object_prefix
