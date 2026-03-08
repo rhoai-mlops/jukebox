@@ -98,7 +98,7 @@ def train_model(
     model.save(trained_model.path)
     
     
-@component(base_image="tensorflow/tensorflow:2.21.0", packages_to_install=["numpy<2", "tf2onnx==1.16.1", "onnx==1.17.0", "pandas==2.2.3", "scikit-learn==1.6.1"])
+@component(base_image="tensorflow/tensorflow:2.21.0", packages_to_install=["numpy<2", "tf2onnx==1.17.0", "onnx==1.20.1", "pandas==2.2.3", "scikit-learn==1.6.1", "protobuf==7.34.0"])
 def convert_keras_to_onnx(
     keras_model: Input[Artifact],
     onnx_model: Output[Artifact],
