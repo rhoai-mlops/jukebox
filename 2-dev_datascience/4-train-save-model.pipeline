@@ -19,7 +19,12 @@
               "outputs": [
                 "models/jukebox/1/model.onnx"
               ],
-              "env_vars": [],
+              "env_vars": [
+                {
+                  "env_var": "PIP_INDEX_URL",
+                  "value": "https://pypi.org/simple"
+                }
+              ],
               "kubernetes_pod_annotations": [],
               "kubernetes_pod_labels": [],
               "kubernetes_secrets": [],
@@ -30,14 +35,14 @@
               "cpu": 1,
               "cpu_limit": 2,
               "memory": 8,
-              "memory_limit": 12
+              "memory_limit": 12,
+              "disable_node_caching": "True"
             },
-            "label": "",
             "ui_data": {
               "label": "1-experiment_train.ipynb",
-              "image": "/notebook/openmusicai2/hitmusic-wb/static/elyra/notebook.svg",
-              "x_pos": 161,
-              "y_pos": 194,
+              "image": "/notebook/user1-jukebox/user1-hitmusic-wb/static/elyra/notebook.svg",
+              "x_pos": 129,
+              "y_pos": 234,
               "description": "Run notebook file"
             }
           },
@@ -114,12 +119,11 @@
               "mounted_volumes": [],
               "filename": "2-save_model.ipynb"
             },
-            "label": "",
             "ui_data": {
               "label": "2-save_model.ipynb",
-              "image": "/notebook/openmusicai2/hitmusic-wb/static/elyra/notebook.svg",
-              "x_pos": 477,
-              "y_pos": 195,
+              "image": "/notebook/user1-jukebox/user1-hitmusic-wb/static/elyra/notebook.svg",
+              "x_pos": 424,
+              "y_pos": 238,
               "description": "Run notebook file"
             }
           },
@@ -167,23 +171,28 @@
         "version": 8,
         "runtime_type": "KUBEFLOW_PIPELINES",
         "properties": {
-          "name": "4-train_save_model",
-          "runtime": "Data Science Pipelines",
+          "name": "4-train-save-model",
+          "runtime": "Pipelines",
           "pipeline_defaults": {
+            "kubernetes_shared_mem_size": {},
             "mounted_volumes": [],
             "kubernetes_pod_annotations": [],
-            "kubernetes_shared_mem_size": {},
             "kubernetes_pod_labels": [],
             "kubernetes_tolerations": [],
-            "kubernetes_secrets": [],
             "env_vars": [
               {
                 "env_var": "KF_PIPELINES_SA_TOKEN_PATH",
                 "value": "/var/run/secrets/kubernetes.io/serviceaccount/token"
+              },
+              {
+                "env_var": "PIP_INDEX_URL",
+                "value": "https://pypi.org/simple"
               }
             ],
-            "runtime_image": "quay.io/modh/runtime-images@sha256:1186ac6c9026d1091f707fe8cedfcc1ea12d1ec46edd9e8d56bb4b12ba048630"
-          }
+            "kubernetes_secrets": [],
+            "runtime_image": "registry.redhat.io/rhoai/odh-pipeline-runtime-datascience-cpu-py312-rhel9@sha256:b772307d7e6409246a26b6fd762b374b14f969f95c91633e29815ce8523b6c3f"
+          },
+          "pipeline_parameters": []
         }
       },
       "runtime_ref": ""
