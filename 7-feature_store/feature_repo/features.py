@@ -8,8 +8,9 @@ from feast.infra.offline_stores.file_source import FileSource
 from feast.on_demand_feature_view import on_demand_feature_view
 from feast.types import Float32, Float64, Int64, Bool
 from feast.data_format import ParquetFormat
+from feast import ValueType
 
-music = Entity(name="music", join_keys=["spotify_id"])
+music = Entity(name="music", join_keys=["spotify_id"], value_type=ValueType.STRING)
 
 music_source = FileSource(
     name="music_s3",

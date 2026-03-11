@@ -30,7 +30,7 @@ def fetch_data(
     data.to_csv(dataset.path, index=False, header=True)
 
 
-@component(base_image='python:3.9', packages_to_install=["dvc[s3]==3.1.0", "dask[dataframe]==2024.8.0", "s3fs==2025.2.0", "pandas==2.2.3"])
+@component(base_image='python:3.9', packages_to_install=["dvc[s3]==3.1.0", "pathspec<0.12.0", "dask[dataframe]==2024.8.0", "s3fs==2025.2.0", "pandas==2.2.3"])
 def fetch_data_from_dvc(
     dataset: Output[Dataset],
     cluster_domain: str,
