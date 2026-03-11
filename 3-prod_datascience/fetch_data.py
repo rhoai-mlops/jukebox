@@ -94,7 +94,7 @@ def fetch_data_from_dvc(
     data.to_csv(dataset.path, index=False, header=True)
 
 
-@component(base_image='python:3.9', packages_to_install=["feast==0.40.0", "psycopg2>=2.9", "dask-expr==1.1.10", "s3fs==2024.6.1", "psycopg_pool==3.2.3", "psycopg==3.2.3", "pandas==2.2.3", "numpy==1.26.4"])
+@component(base_image='python:3.12', packages_to_install=["feast==0.59.0", "psycopg2-binary>=2.9", "dask-expr==1.1.10", "s3fs==2024.6.1", "psycopg_pool==3.2.3", "psycopg==3.2.3", "pandas==2.2.3"])
 def fetch_data_from_feast(
     version: str,
     dataset: Output[Dataset]
@@ -106,13 +106,15 @@ def fetch_data_from_feast(
     import feast
     import pandas as pd
     import numpy as np
+    import os
 
+    user_name = os.environ.get("namespace").split('-')[0]
     fs_config_json = {
-        'project': 'music',
+        'project': f'{user_name}_music',
         'provider': 'local',
         'registry': {
             'registry_type': 'sql',
-            'path': 'postgresql://feast:feast@feast:5432/feast',
+            'path': 'postgresql+psycopg://feast:feast@feast:5432/feast',
             'cache_ttl_seconds': 60,
             'sqlalchemy_config_kwargs': {
                 'echo': False, 
@@ -129,7 +131,8 @@ def fetch_data_from_feast(
             'password': 'feast'
         },
         'offline_store': {'type': 'file'},
-        'entity_key_serialization_version': 2
+        'entity_key_serialization_version': 3,
+        'auth': {'type': 'kubernetes'}
     }
 
     fs_config = feast.repo_config.RepoConfig(**fs_config_json)

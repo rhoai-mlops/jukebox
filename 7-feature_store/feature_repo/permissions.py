@@ -15,13 +15,28 @@ from feast.saved_dataset import SavedDataset
 from feast.permissions.permission import Permission
 from feast.permissions.action import READ, AuthzedAction, ALL_ACTIONS
 from feast.permissions.policy import RoleBasedPolicy, GroupBasedPolicy, NamespaceBasedPolicy, CombinedGroupNamespacePolicy
+import os
 
+user_name = os.environ.get("AWS_ACCESS_KEY_ID", "default")
+namespaces = [f"{user_name}-toolings", f"{user_name}-jukebox"]
 
-namespaces = ["<USER_NAME>-toolings"] # Update this 👈
+all_resources_read = Permission(
+    name="all_resources_read",
+    types=ALL_RESOURCE_TYPES,
+    policy=RoleBasedPolicy(roles=["feast-reader", "feast-writer"]),
+    actions=[AuthzedAction.DESCRIBE] + READ
+)
 
-all_resources = Permission(
-    name="all_resources",
+all_resources_write = Permission(
+    name="all_resources_write",
+    types=ALL_RESOURCE_TYPES,
+    policy=RoleBasedPolicy(roles=["feast-writer"]),
+    actions=ALL_ACTIONS
+)
+
+all_resources_ns = Permission(
+    name="all_resources_ns",
     types=ALL_RESOURCE_TYPES,
     policy=NamespaceBasedPolicy(namespaces=namespaces),
-    actions=[AuthzedAction.DESCRIBE] + READ
+    actions=ALL_ACTIONS
 )
