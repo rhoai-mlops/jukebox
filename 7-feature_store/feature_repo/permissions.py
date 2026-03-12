@@ -18,7 +18,7 @@ from feast.permissions.policy import RoleBasedPolicy, GroupBasedPolicy, Namespac
 import os
 
 user_name = os.environ.get("AWS_ACCESS_KEY_ID", "default")
-namespaces = [f"{user_name}-toolings", f"{user_name}-jukebox"]
+namespaces = [f"{user_name}-toolings", f"{user_name}-jukebox", f"{user_name}-test", f"{user_name}-prod"]
 
 all_resources_read = Permission(
     name="all_resources_read",
