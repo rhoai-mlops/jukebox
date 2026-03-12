@@ -104,9 +104,53 @@ def fetch_data_from_feast(
     """
     
     import feast
+    import feast.infra.offline_stores.dask as feast_dask
+    import dask.dataframe as dd
     import pandas as pd
     import numpy as np
     import os
+
+    # Monkey-patch _normalize_timestamp, _filter_ttl, and _drop_duplicates to
+    # compute to pandas first, avoiding dask-expr lazy evaluation tz bugs.
+    def _patched_normalize(df_to_join, timestamp_field, created_timestamp_column=None):
+        pdf = df_to_join.compute()
+        for col in [timestamp_field, created_timestamp_column]:
+            if col and col in pdf.columns and pd.api.types.is_datetime64_any_dtype(pdf[col]):
+                if pdf[col].dt.tz is None:
+                    pdf[col] = pd.to_datetime(pdf[col], utc=True)
+        return dd.from_pandas(pdf, npartitions=1)
+
+    def _patched_filter_ttl(df_to_join, feature_view, entity_df_event_timestamp_col, timestamp_field):
+        pdf = df_to_join.compute()
+        for col in [timestamp_field, entity_df_event_timestamp_col]:
+            if pdf[col].dt.tz is None:
+                pdf[col] = pd.to_datetime(pdf[col], utc=True)
+        if feature_view.ttl and feature_view.ttl.total_seconds() != 0:
+            pdf = pdf[
+                pdf[timestamp_field].isna()
+                | (
+                    (pdf[timestamp_field] >= pdf[entity_df_event_timestamp_col] - feature_view.ttl)
+                    & (pdf[timestamp_field] <= pdf[entity_df_event_timestamp_col])
+                )
+            ]
+        else:
+            pdf = pdf[
+                pdf[timestamp_field].isna()
+                | (pdf[timestamp_field] <= pdf[entity_df_event_timestamp_col])
+            ]
+        return dd.from_pandas(pdf, npartitions=1)
+
+    def _patched_drop_duplicates(df_to_join, all_join_keys, timestamp_field, created_timestamp_column, entity_df_event_timestamp_col):
+        pdf = df_to_join.compute()
+        if created_timestamp_column:
+            pdf = pdf.sort_values(by=created_timestamp_column, na_position="first")
+        pdf = pdf.sort_values(by=timestamp_field, na_position="first")
+        pdf = pdf.drop_duplicates(all_join_keys + [entity_df_event_timestamp_col], keep="last", ignore_index=True)
+        return dd.from_pandas(pdf, npartitions=1)
+
+    feast_dask._normalize_timestamp = _patched_normalize
+    feast_dask._filter_ttl = _patched_filter_ttl
+    feast_dask._drop_duplicates = _patched_drop_duplicates
 
     user_name = os.environ.get("namespace").split('-')[0]
     fs_config_json = {
@@ -141,7 +185,7 @@ def fetch_data_from_feast(
     song_rankings = pd.read_parquet('https://github.com/rhoai-mlops/jukebox/raw/refs/heads/main/99-data_prep/song_rankings.parquet')
     # Feast will remove rows with identical id and date so we add a small delta to each
     microsecond_deltas = np.arange(0, len(song_rankings))*2
-    song_rankings['snapshot_date'] = pd.to_datetime(song_rankings['snapshot_date'])
+    song_rankings['snapshot_date'] = pd.to_datetime(song_rankings['snapshot_date'], utc=True)
     song_rankings['snapshot_date'] = song_rankings['snapshot_date'] + pd.to_timedelta(microsecond_deltas, unit='us')
 
     feature_service = fs.get_feature_service("serving_fs")
