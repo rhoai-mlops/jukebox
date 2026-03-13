@@ -25,7 +25,7 @@ def extract_parquet_from_url(
     data.path += ".parquet"
     parquet_data.to_parquet(data.path, index=False)
 
-@component(base_image='python:3.9', packages_to_install=["pyarrow==18.0.0", "pandas==2.2.3"])
+@component(base_image='python:3.12', packages_to_install=["pyarrow==18.0.0", "pandas==2.2.3"])
 def extract_parquet_from_s3(
     data: Output[Dataset],
 ):
@@ -55,7 +55,7 @@ def add_date(
 
     df = pd.read_parquet(input_data.path)
     df.columns = map(str.lower, df.columns)
-    df["snapshot_date"] = datetime.now()
+    df["event_timestamp"] = datetime.now()
 
     print(df)
 
@@ -101,23 +101,25 @@ def push_to_s3(
     s3_client.upload_file(data.path, bucket_name, "song_properties.parquet")
 
 
-@component(base_image='python:3.9', packages_to_install=["feast==0.40.0", "psycopg2>=2.9", "dask-expr==1.1.10", "s3fs==2024.6.1", "psycopg_pool==3.2.3", "psycopg==3.2.3", "pandas", "numpy"])
+@component(base_image='python:3.12', packages_to_install=["feast==0.59.0", "psycopg2-binary>=2.9", "dask-expr==1.1.10", "s3fs==2024.6.1", "psycopg_pool==3.2.3", "psycopg==3.2.3", "pandas==2.2.3"])
 def materialize_changes(
 ):
     import feast
     import pandas as pd
     import numpy as np
+    import os
     from datetime import datetime
 
+    user_name = os.environ.get("namespace", "default-toolings").split('-')[0]
     fs_config_json = {
-        'project': 'music',
+        'project': f'{user_name}_music',
         'provider': 'local',
         'registry': {
             'registry_type': 'sql',
-            'path': 'postgresql://feast:feast@feast:5432/feast',
+            'path': 'postgresql+psycopg://feast:feast@feast:5432/feast',
             'cache_ttl_seconds': 60,
             'sqlalchemy_config_kwargs': {
-                'echo': False, 
+                'echo': False,
                 'pool_pre_ping': True
             }
         },
@@ -131,7 +133,8 @@ def materialize_changes(
             'password': 'feast'
         },
         'offline_store': {'type': 'file'},
-        'entity_key_serialization_version': 2
+        'entity_key_serialization_version': 3,
+        'auth': {'type': 'kubernetes'}
     }
 
     fs_config = feast.repo_config.RepoConfig(**fs_config_json)

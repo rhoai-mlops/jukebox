@@ -9,7 +9,7 @@ from kfp.dsl import (
     Artifact,
 )
 
-@component(base_image='python:3.9', packages_to_install=['pip==24.2', 'setuptools==74.1.3', 'boto3==1.36.12', 'model-registry==0.2.9'])
+@component(base_image='python:3.12', packages_to_install=['pip==25.3', 'setuptools==80.9.0', 'boto3==1.40.76', 'model-registry==0.3.7'])
 
 def push_to_model_registry(
     model_name: str,
@@ -119,7 +119,7 @@ def push_to_model_registry(
         model_format_name="onnx",
         model_format_version="1",
         version=version,
-        description=f"{registered_model_name} is a dense neural network. Built with Keras and it has 4 layers. It's been trained on a music dataset consisting of 14K songs and 1.1M data points where the songs are popular. To use send an array of 13 normalized values representing the song features to the input layer is called `input`. The output layer is called `outputs` and will return 72 values, each representing the probability that the song will be popular in that country.",
+        version_description=f"{registered_model_name} is a dense neural network. Built with Keras and it has 4 layers. It's been trained on a music dataset consisting of 14K songs and 1.1M data points where the songs are popular. To use send an array of 13 normalized values representing the song features to the input layer is called `input`. The output layer is called `outputs` and will return 72 values, each representing the probability that the song will be popular in that country.",
         metadata=metadata
     )
     print("Model registered successfully")

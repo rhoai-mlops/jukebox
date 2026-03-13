@@ -1,5 +1,5 @@
-feast==0.40.0
-psycopg2>=2.9
+feast==0.59.0
+psycopg2-binary>=2.9
 s3fs==2024.6.1
 psycopg_pool==3.2.3
 dask-expr==1.1.10
