@@ -20,20 +20,6 @@ import os
 user_name = os.environ.get("AWS_ACCESS_KEY_ID", "default")
 namespaces = [f"{user_name}-toolings", f"{user_name}-jukebox", f"{user_name}-test", f"{user_name}-prod"]
 
-all_resources_read = Permission(
-    name="all_resources_read",
-    types=ALL_RESOURCE_TYPES,
-    policy=RoleBasedPolicy(roles=["feast-reader", "feast-writer"]),
-    actions=[AuthzedAction.DESCRIBE] + READ
-)
-
-all_resources_write = Permission(
-    name="all_resources_write",
-    types=ALL_RESOURCE_TYPES,
-    policy=RoleBasedPolicy(roles=["feast-writer"]),
-    actions=ALL_ACTIONS
-)
-
 all_resources_ns = Permission(
     name="all_resources_ns",
     types=ALL_RESOURCE_TYPES,
