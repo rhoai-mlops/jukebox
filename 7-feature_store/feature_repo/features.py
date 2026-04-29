@@ -17,7 +17,7 @@ music_source = FileSource(
     path="s3://data/song_properties.parquet",
     s3_endpoint_override=os.environ.get('AWS_S3_ENDPOINT'),
     file_format=ParquetFormat(),
-    timestamp_field="snapshot_date",
+    timestamp_field="event_timestamp",
 )
 
 song_properties = FeatureView(
