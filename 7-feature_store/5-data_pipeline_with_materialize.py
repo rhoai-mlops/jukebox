@@ -102,7 +102,7 @@ def push_to_s3(
 
 
 @component(base_image='python:3.12', packages_to_install=["feast==0.59.0", "psycopg2-binary>=2.9", "dask-expr==1.1.10", "s3fs==2024.6.1", "psycopg_pool==3.2.3", "psycopg==3.2.3", "pandas==2.2.3"])
-def materialize_changes(
+def materialize_changes(username: str
 ):
     import feast
     import pandas as pd
@@ -110,7 +110,8 @@ def materialize_changes(
     import os
     from datetime import datetime
 
-    user_name = os.environ.get("namespace", "default-toolings").split('-')[0]
+    user_name = username
+    print(user_name)
     fs_config_json = {
         'project': f'{user_name}_music',
         'provider': 'local',
@@ -136,9 +137,12 @@ def materialize_changes(
         'entity_key_serialization_version': 3,
         'auth': {'type': 'kubernetes'}
     }
+    print(fs_config_json)
 
     fs_config = feast.repo_config.RepoConfig(**fs_config_json)
     fs = feast.FeatureStore(config=fs_config)
+
+    print(datetime.now())
 
     fs.materialize_incremental(datetime.now())
 
@@ -243,7 +247,7 @@ def setup_dvc_repository_with_env_credentials(
   name='ETL Pipeline',
   description='Moves and transforms data from transactions data storage (postgresql) to S3.'
 )
-def etl_pipeline(url_dataset: str, repo_url: str):
+def etl_pipeline(url_dataset: str, repo_url: str, username: str):
     # Extract our current data
     extract_s3_data_task = extract_parquet_from_s3()
     kubernetes.use_secret_as_env(
@@ -282,7 +286,7 @@ def etl_pipeline(url_dataset: str, repo_url: str):
         },
     )
 
-    materialize_task = materialize_changes()
+    materialize_task = materialize_changes(username=username)
     kubernetes.use_secret_as_env(
         materialize_task,
         secret_name='aws-connection-data',
@@ -294,6 +298,7 @@ def etl_pipeline(url_dataset: str, repo_url: str):
             'AWS_S3_BUCKET': 'AWS_S3_BUCKET',
         },
     )
+
     materialize_task.after(load_task)
 
     setup_dvc_task = setup_dvc_repository_with_env_credentials(
