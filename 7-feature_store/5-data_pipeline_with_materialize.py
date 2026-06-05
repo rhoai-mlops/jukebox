@@ -9,7 +9,9 @@ from kfp.dsl import (
 )
 from kfp import kubernetes
 
-USER = ""
+# 🚨🚨🚨 STOP! SET YOUR USERNAME BEFORE RUNNING! 🚨🚨🚨
+# ✏️  Fill in your username below, then save the file!
+USER = ""  # 👈 PUT YOUR USERNAME HERE (e.g. USER = "user1")
 DATASET = ""
 CLUSTER_DOMAIN = ""
 
@@ -110,7 +112,7 @@ def materialize_changes(
     import os
     from datetime import datetime
 
-    user_name = os.environ.get("namespace", "default-toolings").split('-')[0]
+    user_name = USER
     fs_config_json = {
         'project': f'{user_name}_music',
         'provider': 'local',
@@ -137,6 +139,7 @@ def materialize_changes(
         'auth': {'type': 'kubernetes'}
     }
 
+    print(fs_config_json)
     fs_config = feast.repo_config.RepoConfig(**fs_config_json)
     fs = feast.FeatureStore(config=fs_config)
 
