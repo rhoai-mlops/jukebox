@@ -17,9 +17,9 @@ def evaluate_keras_model_performance(
     scaler: Input[Artifact],
     label_encoder: Input[Artifact],
     model_name: str,
-    cluster_domain: str,
     version: str,
-    prod_flag: bool,
+    model_registry_server_address: str,
+    model_registry_port: int,
     metrics: Output[Metrics],
     classification_metrics: Output[ClassificationMetrics]
 ):
@@ -47,15 +47,10 @@ def evaluate_keras_model_performance(
     y_test_argmax = np.argmax(y_test, axis=1)
     
     accuracy = np.sum(y_pred_argmax == y_test_argmax) / len(y_pred_argmax)
-    
-    # Get the previous models properties from the Model Registry
-    if prod_flag:
-        namespace = environ.get("NAMESPACE").split("-")[0]+"-prod"
-    else:
-        namespace = environ.get("NAMESPACE").split("-")[0]
 
-    environ["KF_PIPELINES_SA_TOKEN_PATH"] = "/var/run/secrets/kubernetes.io/serviceaccount/token" # Hotfix to access the endpoint
-    registry = ModelRegistry(server_address=f"https://{namespace}-registry-rest.{cluster_domain}", port=443, author="someone", is_secure=False)
+    environ["KF_PIPELINES_SA_TOKEN_PATH"] = "/var/run/secrets/kubernetes.io/serviceaccount/token"
+    registry = ModelRegistry(server_address=model_registry_server_address, port=model_registry_port, author="someone",is_secure=False)
+
     previous_model_properties = {}
 
     #Wrap with try except to see if the model exists in the registry

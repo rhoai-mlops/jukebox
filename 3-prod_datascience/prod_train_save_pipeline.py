@@ -1,4 +1,3 @@
-# kfp imports
 import kfp
 import kfp.dsl as dsl
 from kfp.dsl import (
@@ -30,7 +29,7 @@ data_connection_secret_name = 'aws-connection-models'
   name='kfp-training-pipeline',
   description='We train an amazing model 🚂'
 )
-def training_pipeline(hyperparameters: dict, model_name: str, version: str, cluster_domain: str, model_storage_pvc: str, prod_flag: bool):
+def training_pipeline(hyperparameters: dict, model_name: str, version: str, model_storage_pvc: str, prod_flag: bool, model_registry_server_address: str, model_registry_port: int):
     ### 🐶 Fetch Data from GitHub
     fetch_task = fetch_data()
 
@@ -63,9 +62,9 @@ def training_pipeline(hyperparameters: dict, model_name: str, version: str, clus
         scaler = pre_processing_task.outputs["scaler"],
         label_encoder = pre_processing_task.outputs["label_encoder"],
         model_name = model_name,
-        cluster_domain = cluster_domain,
-        version = version, # Add version to force a rerun of this step every new version
-        prod_flag = prod_flag,
+        version = version,
+        model_registry_server_address = model_registry_server_address,
+        model_registry_port = model_registry_port,
     )
     kubernetes.use_field_path_as_env(
         model_evaluation_task,
@@ -85,8 +84,9 @@ def training_pipeline(hyperparameters: dict, model_name: str, version: str, clus
     register_model_task = push_to_model_registry(
         model_name = model_name, 
         version = version,
-        cluster_domain = cluster_domain,
         prod_flag = prod_flag,
+        model_registry_server_address = model_registry_server_address,
+        model_registry_port = model_registry_port,
         keras_model = training_task.outputs["trained_model"],
         model = convert_task.outputs["onnx_model"],
         metrics = model_evaluation_task.outputs["metrics"],
@@ -122,7 +122,6 @@ if __name__ == '__main__':
         },
         "model_name": "jukebox",
         "version": "0.0.2",
-        "cluster_domain": "<CLUSTER_DOMAIN>", # 👈 add your cluster domain here
         "model_storage_pvc": "jukebox-model-pvc",
         "prod_flag": False
     }
